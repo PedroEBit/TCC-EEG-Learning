@@ -1,0 +1,51 @@
+De Zero em Redes Neurais a 88.9% de Accuracy em Brain-Computer Interface
+
+Há alguns meses, eu não sabia o que era uma convolução. Hoje, construí do zero uma rede neural que lê sinais cerebrais e classifica intenções de movimento com quase 89% de precisão. Esse é o resumo do meu TCC em EEG e Brain-Computer Interfaces — mas a jornada é o que realmente importa.
+
+O problema: Classificar padrões de imaginação motora (Motor Imagery) a partir de sinais de EEG. Quando você imagina mover a mão esquerda, o ritmo mu (8-13 Hz) dessincroniza sobre o córtex motor contralateral. Essa modulação sutil, enterrada em ruído, é o que um classificador precisa detectar.
+
+---
+
+Construindo a EEGNet — entendendo cada camada:
+
+A arquitetura que implementei é a EEGNet, projetada especificamente para sinais EEG. Cada camada tem uma função neurofisiológica clara:
+
+- Convolução Temporal: aprende filtros de frequência — essencialmente descobre sozinha que as bandas mu e beta são as mais relevantes para Motor Imagery
+- Convolução Espacial (Depthwise): aprende combinações de canais — descobre quais eletrodos (C3 vs C4) carregam informação discriminativa, de forma análoga ao CSP (Common Spatial Patterns)
+- Convolução Separável: captura interações tempo-espaço de ordem superior
+- Batch Normalization + Dropout: regularização para combater overfitting com poucos dados (~144 trials por cenário)
+
+---
+
+A jornada de melhorias e o papel crucial do Data Augmentation:
+
+Com apenas 144 trials de treino (2 classes), o modelo baseline ficou em ~50% — basicamente chance. O modelo decorava os dados de treino e não generalizava. Com 288 trials (4 classes), alcançava 66.7%.
+
+O divisor de águas foi o Data Augmentation via Gaussian Noise Injection: gerar cópias de cada trial com ruído aditivo calibrado (std=0.1 relativo à época), simulando a variabilidade natural do EEG. De 144 trials passamos a 864.
+
+Resultados no test set (dados que o modelo nunca viu):
+
+- 2 classes (left hand vs right hand) + augmentation: 88.9% accuracy | kappa = 0.778
+- 4 classes (left, right, feet, tongue) + augmentation: 80.2% accuracy | kappa = 0.736
+
+O Cohen's Kappa é a métrica padrão do BCI Competition porque desconta o acerto por acaso — 0.778 em 2 classes e 0.736 em 4 classes indicam performance robusta e comparável, apesar da diferença absoluta em accuracy.
+
+---
+
+O que mais aprendi no processo:
+
+- Que R² aplicado às probabilidades do softmax revela a confiança real do modelo (0.674 no 2-class — o modelo acerta, mas nem sempre com convicção total)
+- Que a análise da distribuição de confiança do softmax é essencial para BCI online: o modelo de 2 classes tem 94% de confiança média nos acertos vs 75% nos erros — um gap que permite usar um threshold para filtrar predições incertas em tempo real
+- Que Precision e Recall equilibrados é um bom ponto de partida, mas em BCI para jogos, alta Precision importa mais — errar ativamente (ir pro lado errado) é pior que não responder
+
+---
+
+Próximos passos: Sliding window augmentation para treinar com janelas de 2s (metade da latência), pipeline completo combinando técnicas, e integração online via TCP para controlar um jogo em tempo real com o pensamento.
+
+Começar do zero absoluto em redes neurais e chegar aqui em alguns meses me ensinou que o mais importante não é a accuracy final — é entender por que cada decisão arquitetural e cada técnica de preprocessing funciona. Quando você sabe que a convolução espacial está aprendendo padrões de lateralização hemisférica, o modelo deixa de ser uma caixa preta.
+
+Dataset: BCI Competition IV 2a (Graz)
+Arquitetura: EEGNet (Lawhern et al., 2018)
+Stack: Python, MNE, TensorFlow/Keras
+
+#BCI #EEG #DeepLearning #NeuralNetworks #BrainComputerInterface #MachineLearning #Neuroscience #TCC
