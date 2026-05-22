@@ -1,0 +1,848 @@
+================================================================================
+COMPLETE EXTRACTION: eegnet_motor_imagery.ipynb
+EEGNet -- Motor Imagery Classification (BCI Competition IV Dataset 2a)
+================================================================================
+Notebook: C:\Users\pedro\Workspaces\EEG_learning\eegnet_motor_imagery.ipynb
+Total cells: 27 (cells 0-23 are the main notebook, plus 3 exploratory cells)
+================================================================================
+
+
+################################################################################
+## CELL 0 [MARKDOWN]
+################################################################################
+
+# EEGNet -- Motor Imagery Classification
+**BCI Competition IV Dataset 2a** -- 4 classes (left hand, right hand, feet, tongue)
+Pipeline: MNE loading -> Preprocessing -> EEGNet (TF/Keras) -> Evaluation
+
+Reference: Lawhern et al. (2018) *EEGNet: A compact convolutional neural network for EEG-based BCIs*
+
+
+################################################################################
+## CELL 1 [MARKDOWN]
+################################################################################
+
+## 0. Environment & Imports
+
+
+################################################################################
+## CELL 2 [CODE]
+################################################################################
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from pathlib import Path
+
+import mne
+from mne import Epochs, events_from_annotations
+from mne.io import read_raw_gdf
+
+import tensorflow as tf
+from tensorflow.keras import Model, Input
+from tensorflow.keras.layers import (
+    Conv2D, DepthwiseConv2D, SeparableConv2D,
+    BatchNormalization, Activation, AveragePooling2D,
+    Dropout, Flatten, Dense
+)
+from tensorflow.keras.constraints import max_norm
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import confusion_matrix, classification_report, cohen_kappa_score
+from sklearn.model_selection import StratifiedKFold
+
+mne.set_log_level('WARNING')
+print(f'MNE {mne.__version__} | TF {tf.__version__}')
+
+--- OUTPUT ---
+MNE 1.11.0 | TF 2.21.0
+
+
+################################################################################
+## CELL 3 [MARKDOWN]
+################################################################################
+
+## 1. Dataset Setup
+
+**Download:** BCI Competition IV Dataset 2a from https://www.bbci.de/competition/iv/
+Files needed per subject: `A0{1-9}T.gdf` (training) and `A0{1-9}E.gdf` (evaluation)
+Place them in `data/bcic_iv_2a/`
+
+
+################################################################################
+## CELL 4 [CODE]
+################################################################################
+
+import os
+
+# Working directory diagnosis
+print(f'CWD: {os.getcwd()}')
+
+# --- Paths ---
+NOTEBOOK_DIR  = Path(r'C:\Users\pedro\Workspaces\EEG_learning')
+DATA_DIR      = NOTEBOOK_DIR / 'data' / 'bcic_iv_2a'
+LABELS_DIR    = NOTEBOOK_DIR / 'data' / 'true_labels'
+
+# Dataset parameters
+SFREQ        = 250
+N_CHANNELS   = 22
+N_CLASSES    = 4
+CLASS_NAMES  = ['Left Hand', 'Right Hand', 'Feet', 'Tongue']
+
+# Event codes in GDF annotations
+EVENT_ID = {
+    'left_hand':  769,
+    'right_hand': 770,
+    'feet':       771,
+    'tongue':     772,
+}
+CODE_TO_IDX = {769: 0, 770: 1, 771: 2, 772: 3}
+
+SUBJECTS = list(range(1, 10))
+gdf_files = sorted(DATA_DIR.glob('*.gdf'))
+print(f'DATA_DIR:   {DATA_DIR}')
+print(f'LABELS_DIR: {LABELS_DIR}')
+print(f'Found {len(gdf_files)} GDF files: {[f.name for f in gdf_files]}')
+
+--- OUTPUT ---
+CWD: c:\Users\pedro\Workspaces\EEG_learning
+DATA_DIR:   C:\Users\pedro\Workspaces\EEG_learning\data\bcic_iv_2a
+LABELS_DIR: C:\Users\pedro\Workspaces\EEG_learning\data\true_labels
+Found 18 GDF files: ['A01E.gdf', 'A01T.gdf', 'A02E.gdf', 'A02T.gdf', 'A03E.gdf', 'A03T.gdf', 'A04E.gdf', 'A04T.gdf', 'A05E.gdf', 'A05T.gdf', 'A06E.gdf', 'A06T.gdf', 'A07E.gdf', 'A07T.gdf', 'A08E.gdf', 'A08T.gdf', 'A09E.gdf', 'A09T.gdf']
+
+
+################################################################################
+## CELL 5 [MARKDOWN]
+################################################################################
+
+## 2. Loading & Preprocessing
+
+Pipeline per file:
+1. Load GDF with MNE
+2. Select EEG channels (drop EOG)
+3. Bandpass filter 4-40 Hz
+4. Epoch: cue onset -> [0, 4] s (standard MI window)
+5. Baseline correction
+
+
+################################################################################
+## CELL 6 [CODE]
+################################################################################
+
+from scipy.io import loadmat
+
+def load_subject(subject_id: int, split: str = 'T') -> tuple[np.ndarray, np.ndarray]:
+    """
+    Load, filter, and epoch one subject's data.
+    Returns X: (n_epochs, n_channels, n_times), y: (n_epochs,) in {0,1,2,3}
+
+    - split='T': labels come from GDF annotations (769-772)
+    - split='E': trial onsets from GDF (code 783), labels from .mat file
+    """
+    fname = DATA_DIR / f'A0{subject_id}{split}.gdf'
+    raw = read_raw_gdf(str(fname), preload=True, verbose=False)
+
+    # Keep only EEG channels (drop EOG)
+    raw.pick_types(eeg=True)
+    raw.pick(raw.ch_names[:N_CHANNELS])
+
+    # Bandpass filter
+    raw.filter(l_freq=4.0, h_freq=40.0, method='iir', verbose=False)
+
+    if split == 'T':
+        # Training: class labels are embedded in annotations (769-772)
+        ann_to_code = {str(k): k for k in CODE_TO_IDX}
+        events, _ = mne.events_from_annotations(raw, event_id=ann_to_code, verbose=False)
+        events = events[np.isin(events[:, 2], list(CODE_TO_IDX.keys()))]
+        epoch_event_id = EVENT_ID
+
+    else:
+        # Evaluation: trials marked as 783 (unknown), labels from .mat
+        events, _ = mne.events_from_annotations(raw, event_id={'783': 783}, verbose=False)
+        mat = loadmat(str(LABELS_DIR / f'A0{subject_id}E.mat'))
+        # classlabel: 1=left, 2=right, 3=feet, 4=tongue -> shift to 0-indexed
+        true_labels = mat['classlabel'].flatten() - 1   # shape (288,)
+        # Map each trial to its synthetic event code so Epochs stays consistent
+        # (we rebuild y from true_labels directly after epoching)
+        epoch_event_id = {'cue': 783}
+
+    epochs = mne.Epochs(
+        raw, events,
+        event_id=epoch_event_id,
+        tmin=0.0, tmax=4.0,
+        baseline=None,
+        preload=True,
+        verbose=False,
+    )
+
+    X = epochs.get_data().astype(np.float32)   # (n_epochs, 22, 1001)
+
+    if split == 'T':
+        y = np.array([CODE_TO_IDX[c] for c in epochs.events[:, 2]], dtype=np.int32)
+    else:
+        y = true_labels[:len(X)].astype(np.int32)  # match length in case of rejected trials
+
+    return X, y
+
+
+# Quick test
+X1, y1 = load_subject(1, 'T')
+print(f'Train -- X: {X1.shape}, y: {y1.shape}')
+X1e, y1e = load_subject(1, 'E')
+print(f'Eval  -- X: {X1e.shape}, y: {y1e.shape}')
+print(f'Classes eval: {dict(zip(*np.unique(y1e, return_counts=True)))}')
+
+--- OUTPUT ---
+[Warning] Channel names are not unique, found duplicates for: {'EEG'}. Applying running numbers for duplicates.
+
+Train -- X: (288, 22, 1001), y: (288,)
+
+[Warning] Channel names are not unique, found duplicates for: {'EEG'}. Applying running numbers for duplicates.
+
+Eval  -- X: (288, 22, 1001), y: (288,)
+Classes eval: {0: 72, 1: 72, 2: 72, 3: 72}
+
+
+################################################################################
+## CELL 7 [CODE]
+################################################################################
+
+def load_all_subjects(split: str = 'T') -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Load all 9 subjects. Returns X, y, subject_ids."""
+    Xs, ys, sids = [], [], []
+    for sid in SUBJECTS:
+        fpath = DATA_DIR / f'A0{sid}{split}.gdf'
+        if not fpath.exists():
+            print(f'  Skipping subject {sid} ({fpath.name} not found)')
+            continue
+        X, y = load_subject(sid, split)
+        Xs.append(X)
+        ys.append(y)
+        sids.append(np.full(len(y), sid, dtype=np.int32))
+        print(f'  Subject {sid}: {X.shape[0]} epochs')
+
+    return np.concatenate(Xs), np.concatenate(ys), np.concatenate(sids)
+
+
+# Load training splits
+X_all, y_all, subject_ids = load_all_subjects('T')
+print(f'\nTotal -- X: {X_all.shape}, y: {y_all.shape}')
+
+--- OUTPUT ---
+  Subject 1: 288 epochs
+  Subject 2: 288 epochs
+  Subject 3: 288 epochs
+  Subject 4: 288 epochs
+  Subject 5: 288 epochs
+  Subject 6: 288 epochs
+  Subject 7: 288 epochs
+  Subject 8: 288 epochs
+  Subject 9: 288 epochs
+
+Total -- X: (2592, 22, 1001), y: (2592,)
+
+
+################################################################################
+## CELL 8 [MARKDOWN]
+################################################################################
+
+## 3. Normalization & Reshaping for EEGNet
+
+EEGNet expects input `(batch, 1, n_channels, n_times)` -- a single "image" with 1 "color" channel.
+
+
+################################################################################
+## CELL 9 [CODE]
+################################################################################
+
+def normalize_per_epoch(X: np.ndarray) -> np.ndarray:
+    """Z-score each epoch independently across channels x time."""
+    mu  = X.mean(axis=(1, 2), keepdims=True)
+    std = X.std(axis=(1, 2), keepdims=True) + 1e-8
+    return (X - mu) / std
+
+
+def reshape_for_eegnet(X: np.ndarray) -> np.ndarray:
+    """(n, C, T) -> (n, 1, C, T)  -- channels-last not used; TF default is NHWC but
+    EEGNet treats the signal as: H=channels, W=time, single input map."""
+    return X[:, np.newaxis, :, :]    # (n, 1, C, T)
+
+
+X_norm  = normalize_per_epoch(X_all)
+X_ready = reshape_for_eegnet(X_norm)
+print(f'Input tensor shape: {X_ready.shape}  ->  (n_epochs, 1, {N_CHANNELS}, n_times)')
+
+--- OUTPUT ---
+Input tensor shape: (2592, 1, 22, 1001)  ->  (n_epochs, 1, 22, n_times)
+
+
+################################################################################
+## CELL 10 [MARKDOWN]
+################################################################################
+
+## 4. EEGNet Architecture
+
+From Lawhern et al. (2018), parameterized version:
+- **Block 1:** Temporal Conv -> DepthwiseConv (spatial) -> BN -> ELU -> AvgPool -> Dropout
+- **Block 2:** SeparableConv (temporal) -> BN -> ELU -> AvgPool -> Dropout
+- **Classifier:** Flatten -> Dense(n_classes, softmax)
+
+
+################################################################################
+## CELL 11 [CODE]
+################################################################################
+
+def build_eegnet(
+    n_channels: int  = 22,
+    n_times: int     = 1001,
+    n_classes: int   = 4,
+    sfreq: int       = 250,
+    F1: int          = 8,      # number of temporal filters
+    D: int           = 2,      # depth multiplier (spatial filters = F1*D)
+    F2: int          = 16,     # pointwise filters in Block 2  (= F1*D)
+    dropout_rate: float = 0.5,
+) -> Model:
+    """
+    EEGNet as described in Lawhern et al. 2018.
+    Input shape: (1, n_channels, n_times)  [channels_first]
+    """
+    kern_len = sfreq // 2   # temporal kernel = 0.5 s @ sfreq
+
+    inputs = Input(shape=(1, n_channels, n_times), name='eeg_input')
+
+    # --- Block 1 ---
+    # Temporal convolution: learns frequency-specific filters
+    x = Conv2D(
+        filters=F1,
+        kernel_size=(1, kern_len),
+        padding='same',
+        use_bias=False,
+        data_format='channels_first',
+        name='temporal_conv',
+    )(inputs)
+    x = BatchNormalization(axis=1)(x)
+
+    # Depthwise spatial convolution: learns a spatial filter per temporal filter
+    x = DepthwiseConv2D(
+        kernel_size=(n_channels, 1),
+        depth_multiplier=D,
+        depthwise_constraint=max_norm(1.0),
+        use_bias=False,
+        data_format='channels_first',
+        name='spatial_conv',
+    )(x)
+    x = BatchNormalization(axis=1)(x)
+    x = Activation('elu')(x)
+    x = AveragePooling2D(pool_size=(1, 4), data_format='channels_first')(x)
+    x = Dropout(dropout_rate)(x)
+
+    # --- Block 2 ---
+    # Separable conv: depthwise + pointwise, learns temporal relationships
+    x = SeparableConv2D(
+        filters=F2,
+        kernel_size=(1, 16),
+        padding='same',
+        use_bias=False,
+        data_format='channels_first',
+        name='separable_conv',
+    )(x)
+    x = BatchNormalization(axis=1)(x)
+    x = Activation('elu')(x)
+    x = AveragePooling2D(pool_size=(1, 8), data_format='channels_first')(x)
+    x = Dropout(dropout_rate)(x)
+
+    # --- Classifier ---
+    x = Flatten()(x)
+    outputs = Dense(
+        n_classes,
+        activation='softmax',
+        kernel_constraint=max_norm(0.25),
+        name='classifier',
+    )(x)
+
+    model = Model(inputs, outputs, name='EEGNet')
+    return model
+
+
+# Infer n_times from loaded data
+n_times = X_ready.shape[-1]
+model   = build_eegnet(N_CHANNELS, n_times, N_CLASSES, SFREQ)
+model.summary()
+
+--- OUTPUT ---
+Model: "EEGNet"
+
++-----------------------------------+------------------------+---------------+
+| Layer (type)                      | Output Shape           |       Param # |
++===================================+========================+===============+
+| eeg_input (InputLayer)            | (None, 1, 22, 1001)   |             0 |
++-----------------------------------+------------------------+---------------+
+| temporal_conv (Conv2D)            | (None, 8, 22, 1001)   |         1,000 |
++-----------------------------------+------------------------+---------------+
+| batch_normalization               | (None, 8, 22, 1001)   |            32 |
+| (BatchNormalization)              |                        |               |
++-----------------------------------+------------------------+---------------+
+| spatial_conv (DepthwiseConv2D)    | (None, 16, 1, 1001)   |           352 |
++-----------------------------------+------------------------+---------------+
+| batch_normalization               | (None, 16, 1, 1001)   |            64 |
+| (BatchNormalization)              |                        |               |
++-----------------------------------+------------------------+---------------+
+| activation (Activation)           | (None, 16, 1, 1001)   |             0 |
++-----------------------------------+------------------------+---------------+
+| average_pooling2d                 | (None, 16, 1, 250)    |             0 |
+| (AveragePooling2D)                |                        |               |
++-----------------------------------+------------------------+---------------+
+| dropout (Dropout)                 | (None, 16, 1, 250)    |             0 |
++-----------------------------------+------------------------+---------------+
+| separable_conv                    | (None, 16, 1, 250)    |           512 |
+| (SeparableConv2D)                 |                        |               |
++-----------------------------------+------------------------+---------------+
+| batch_normalization               | (None, 16, 1, 250)    |            64 |
+| (BatchNormalization)              |                        |               |
++-----------------------------------+------------------------+---------------+
+| activation (Activation)           | (None, 16, 1, 250)    |             0 |
++-----------------------------------+------------------------+---------------+
+| average_pooling2d                 | (None, 16, 1, 31)     |             0 |
+| (AveragePooling2D)                |                        |               |
++-----------------------------------+------------------------+---------------+
+| dropout (Dropout)                 | (None, 16, 1, 31)     |             0 |
++-----------------------------------+------------------------+---------------+
+| flatten (Flatten)                 | (None, 496)            |             0 |
++-----------------------------------+------------------------+---------------+
+| classifier (Dense)                | (None, 4)              |         1,988 |
++-----------------------------------+------------------------+---------------+
+
+ Total params: 4,012 (15.67 KB)
+ Trainable params: 3,932 (15.36 KB)
+ Non-trainable params: 80 (320.00 B)
+
+
+################################################################################
+## CELL 12 [MARKDOWN]
+################################################################################
+
+## 5. Training -- Within-Subject (Subject 1)
+
+Using the standard train/test split: `A0xT.gdf` for training, `A0xE.gdf` for testing.
+
+
+################################################################################
+## CELL 13 [CODE]
+################################################################################
+
+SUBJECT_ID = 1   # change to run any subject
+
+# Load train (T) and evaluation (E) splits
+X_train, y_train = load_subject(SUBJECT_ID, 'T')
+X_test,  y_test  = load_subject(SUBJECT_ID, 'E')
+
+X_train = reshape_for_eegnet(normalize_per_epoch(X_train))
+X_test  = reshape_for_eegnet(normalize_per_epoch(X_test))
+
+print(f'Train: {X_train.shape} | Test: {X_test.shape}')
+print(f'Class dist train: {dict(zip(*np.unique(y_train, return_counts=True)))}')
+print(f'Class dist test:  {dict(zip(*np.unique(y_test,  return_counts=True)))}')
+
+--- OUTPUT ---
+[Warning] Channel names are not unique, found duplicates for: {'EEG'}. Applying running numbers for duplicates.
+[Warning] Channel names are not unique, found duplicates for: {'EEG'}. Applying running numbers for duplicates.
+
+Train: (288, 1, 22, 1001) | Test: (288, 1, 22, 1001)
+Class dist train: {0: 72, 1: 72, 2: 72, 3: 72}
+Class dist test:  {0: 72, 1: 72, 2: 72, 3: 72}
+
+
+################################################################################
+## CELL 14 [CODE]
+################################################################################
+
+# Build & compile
+model = build_eegnet(N_CHANNELS, n_times, N_CLASSES, SFREQ)
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy'],
+)
+
+callbacks = [
+    EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True),
+    ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, min_lr=1e-5),
+]
+
+history = model.fit(
+    X_train, y_train,
+    epochs=300,
+    batch_size=32,
+    validation_split=0.2,
+    callbacks=callbacks,
+    verbose=1,
+)
+
+--- OUTPUT ---
+[Training log - 300 epochs max, with EarlyStopping (patience=20) and ReduceLROnPlateau]
+
+Training configuration:
+  - Optimizer: Adam (lr=1e-3)
+  - Loss: sparse_categorical_crossentropy
+  - Batch size: 32
+  - Validation split: 0.2 (20% of 288 = ~58 validation samples, ~230 training samples)
+  - EarlyStopping: patience=20, restore_best_weights=True
+  - ReduceLROnPlateau: factor=0.5, patience=10, min_lr=1e-5
+
+[NOTE: Full epoch-by-epoch training log was produced in the notebook but is too
+ large to include as text here (hundreds of lines of per-epoch loss/accuracy).
+ The training converged and EarlyStopping restored the best weights.
+ Final model performance is reported in Cell 17 below.]
+
+
+################################################################################
+## CELL 15 [MARKDOWN]
+################################################################################
+
+## 6. Evaluation
+
+
+################################################################################
+## CELL 16 [CODE]
+################################################################################
+
+# Training curves
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+axes[0].plot(history.history['loss'], label='train')
+axes[0].plot(history.history['val_loss'], label='val')
+axes[0].set_title('Loss'); axes[0].legend()
+axes[1].plot(history.history['accuracy'], label='train')
+axes[1].plot(history.history['val_accuracy'], label='val')
+axes[1].set_title('Accuracy'); axes[1].legend()
+plt.tight_layout()
+plt.show()
+
+--- OUTPUT ---
+[PLOT: Two side-by-side training curves (PNG image in notebook)]
+  Left panel:  Loss curves (train vs validation) over epochs
+  Right panel: Accuracy curves (train vs validation) over epochs
+
+
+################################################################################
+## CELL 17 [CODE]
+################################################################################
+
+# Test-set evaluation
+y_pred_prob = model.predict(X_test)
+y_pred = np.argmax(y_pred_prob, axis=1)
+
+acc   = (y_pred == y_test).mean()
+kappa = cohen_kappa_score(y_test, y_pred)
+
+print(f'Subject {SUBJECT_ID} -- Accuracy: {acc:.4f} | Cohen\'s kappa: {kappa:.4f}')
+print()
+print(classification_report(y_test, y_pred, target_names=CLASS_NAMES))
+
+--- OUTPUT ---
+9/9 batches - 0s 32ms/step
+
+Subject 1 -- Accuracy: 0.6667 | Cohen's kappa: 0.5556
+
+              precision    recall  f1-score   support
+
+   Left Hand       0.79      0.67      0.72        72
+  Right Hand       0.79      0.94      0.86        72
+        Feet       0.50      0.53      0.51        72
+      Tongue       0.58      0.53      0.55        72
+
+    accuracy                           0.67       288
+   macro avg       0.67      0.67      0.66       288
+weighted avg       0.67      0.67      0.66       288
+
+
+################################################################################
+## CELL 18 [CODE]
+################################################################################
+
+# Confusion matrix
+cm = confusion_matrix(y_test, y_pred, normalize='true')
+plt.figure(figsize=(6, 5))
+sns.heatmap(
+    cm, annot=True, fmt='.2f', cmap='Blues',
+    xticklabels=CLASS_NAMES, yticklabels=CLASS_NAMES
+)
+plt.ylabel('True'); plt.xlabel('Predicted')
+plt.title(f'EEGNet -- Subject {SUBJECT_ID} (normalized)')
+plt.tight_layout()
+plt.show()
+
+--- OUTPUT ---
+[PLOT: Normalized confusion matrix heatmap (PNG image in notebook)]
+  - 4x4 matrix: Left Hand, Right Hand, Feet, Tongue
+  - Blues colormap with annotated decimal values (normalized by true class)
+  - Title: "EEGNet -- Subject 1 (normalized)"
+
+
+################################################################################
+## CELL 19 [MARKDOWN]
+################################################################################
+
+## 7. Cross-Subject Evaluation (Leave-One-Subject-Out)
+
+Train on 8 subjects, test on the held-out subject -- gives a more generalisable performance estimate.
+
+
+################################################################################
+## CELL 20 [CODE]
+################################################################################
+
+def run_loso(subjects=SUBJECTS, epochs_fit=300, batch_size=32):
+    results = []
+
+    for test_sub in subjects:
+        train_subs = [s for s in subjects if s != test_sub]
+
+        # Collect training data from all other subjects
+        Xtr, ytr = [], []
+        for s in train_subs:
+            if not (DATA_DIR / f'A0{s}T.gdf').exists():
+                continue
+            X_, y_ = load_subject(s, 'T')
+            Xtr.append(X_); ytr.append(y_)
+        Xtr = np.concatenate(Xtr)
+        ytr = np.concatenate(ytr)
+
+        # Test subject
+        X_te, y_te = load_subject(test_sub, 'E')
+
+        # Normalize & reshape
+        Xtr = reshape_for_eegnet(normalize_per_epoch(Xtr))
+        X_te = reshape_for_eegnet(normalize_per_epoch(X_te))
+
+        nt = Xtr.shape[-1]
+        m  = build_eegnet(N_CHANNELS, nt, N_CLASSES, SFREQ)
+        m.compile(
+            optimizer=tf.keras.optimizers.Adam(1e-3),
+            loss='sparse_categorical_crossentropy',
+            metrics=['accuracy'],
+        )
+        m.fit(
+            Xtr, ytr,
+            epochs=epochs_fit, batch_size=batch_size,
+            validation_split=0.1,
+            callbacks=[EarlyStopping(patience=15, restore_best_weights=True)],
+            verbose=0,
+        )
+
+        y_pred = np.argmax(m.predict(X_te), axis=1)
+        acc    = (y_pred == y_te).mean()
+        kappa  = cohen_kappa_score(y_te, y_pred)
+        results.append({'subject': test_sub, 'accuracy': acc, 'kappa': kappa})
+        print(f'  LOSO -- test_sub={test_sub}: acc={acc:.4f}, kappa={kappa:.4f}')
+
+    return results
+
+
+# Uncomment to run (takes several minutes)
+# loso_results = run_loso()
+print('run_loso() defined -- uncomment last line to execute.')
+
+--- OUTPUT ---
+run_loso() defined -- uncomment last line to execute.
+
+
+################################################################################
+## CELL 21 [CODE]
+################################################################################
+
+# Plot LOSO summary (run after run_loso)
+# import pandas as pd
+# df = pd.DataFrame(loso_results)
+# print(df.describe())
+# df.plot(x='subject', y=['accuracy', 'kappa'], kind='bar', figsize=(10,4))
+# plt.title('LOSO -- EEGNet per subject'); plt.tight_layout(); plt.show()
+
+--- OUTPUT ---
+[No output -- all code is commented out]
+
+
+################################################################################
+## CELL 22 [MARKDOWN]
+################################################################################
+
+## 8. Save & Load Model
+
+
+################################################################################
+## CELL 23 [CODE]
+################################################################################
+
+MODELS_DIR = Path('models')
+MODELS_DIR.mkdir(exist_ok=True)
+
+model_path = MODELS_DIR / f'eegnet_subject{SUBJECT_ID}.keras'
+model.save(model_path)
+print(f'Saved: {model_path}')
+
+# Reload:
+# model_loaded = tf.keras.models.load_model(model_path)
+
+--- OUTPUT ---
+Saved: models\eegnet_subject1.keras
+
+
+################################################################################
+## CELL 24 [CODE] (Exploratory -- id: 1tmw0upc1k2)
+################################################################################
+
+import mne
+from mne.io import read_raw_gdf
+from pathlib import Path
+import numpy as np
+
+DATA_DIR = Path(r'C:\Users\pedro\Workspaces\EEG_learning\data\bcic_iv_2a')
+raw_e = read_raw_gdf(str(DATA_DIR / 'A01E.gdf'), preload=False, verbose=False)
+
+print("Descriptions unicas nas annotations:")
+print(np.unique(raw_e.annotations.description))
+
+--- OUTPUT ---
+[Warning] Channel names are not unique, found duplicates for: {'EEG'}. Applying running numbers for duplicates.
+
+Descriptions unicas nas annotations:
+['1023' '1072' '276' '277' '32766' '768' '783']
+
+
+################################################################################
+## CELL 25 [CODE] (Exploratory -- id: utrj03ts2s)
+################################################################################
+
+import mne
+from mne.io import read_raw_gdf
+from pathlib import Path
+import numpy as np
+
+DATA_DIR = Path(r'C:\Users\pedro\Workspaces\EEG_learning\data\bcic_iv_2a')
+raw_e = read_raw_gdf(str(DATA_DIR / 'A01E.gdf'), preload=False, verbose=False)
+
+print("Descriptions unicas nas annotations:")
+print(np.unique(raw_e.annotations.description))
+
+--- OUTPUT ---
+[Warning] Channel names are not unique, found duplicates for: {'EEG'}. Applying running numbers for duplicates.
+
+Descriptions unicas nas annotations:
+['1023' '1072' '276' '277' '32766' '768' '783']
+
+
+################################################################################
+## CELL 26 [CODE] (Exploratory -- id: eo9oqhci0ps)
+################################################################################
+
+from pathlib import Path
+DATA_DIR = Path(r'C:\Users\pedro\Workspaces\EEG_learning\data\true_labels')
+mat_files = sorted(DATA_DIR.glob('*.mat'))
+print(f'Arquivos .mat encontrados: {[f.name for f in mat_files]}')
+
+--- OUTPUT ---
+Arquivos .mat encontrados: ['A01E.mat', 'A01T.mat', 'A02E.mat', 'A02T.mat', 'A03E.mat', 'A03T.mat', 'A04E.mat', 'A04T.mat', 'A05E.mat', 'A05T.mat', 'A06E.mat', 'A06T.mat', 'A07E.mat', 'A07T.mat', 'A08E.mat', 'A08T.mat', 'A09E.mat', 'A09T.mat']
+
+
+================================================================================
+## SUMMARY OF KEY RESULTS FOR THESIS (TCC)
+================================================================================
+
+Dataset: BCI Competition IV Dataset 2a
+  - 9 subjects, 4 motor imagery classes (left hand, right hand, feet, tongue)
+  - 22 EEG channels, 250 Hz sampling rate
+  - 288 trials per subject per split (72 per class, perfectly balanced)
+  - Total: 2,592 training epochs across all 9 subjects
+  - 18 GDF files total (9 training + 9 evaluation)
+  - Separate .mat files with true labels for evaluation splits
+
+Preprocessing Pipeline:
+  1. Load GDF files with MNE (read_raw_gdf)
+  2. Select 22 EEG channels (drop EOG channels)
+  3. IIR bandpass filter: 4-40 Hz
+  4. Epoch extraction: [0, 4] seconds post-cue onset (yields 1001 samples at 250 Hz)
+  5. Per-epoch Z-score normalization (mean=0, std=1 across channels x time)
+  6. Reshape to (n, 1, 22, 1001) for EEGNet input format (channels_first)
+
+EEGNet Architecture (Lawhern et al., 2018):
+  - Input: (1, 22, 1001) -- 1 input map, 22 channels, 1001 time samples
+  - Total parameters: 4,012 (15.67 KB) -- extremely compact model
+  - Trainable parameters: 3,932
+  - Non-trainable parameters: 80
+
+  Block 1 (Temporal + Spatial filtering):
+    - Conv2D: F1=8 temporal filters, kernel_size=(1, 125), padding='same', no bias
+    - BatchNormalization (axis=1)
+    - DepthwiseConv2D: kernel_size=(22, 1), depth_multiplier D=2, max_norm(1.0)
+    - BatchNormalization (axis=1)
+    - ELU activation
+    - AveragePooling2D: pool_size=(1, 4)
+    - Dropout: rate=0.5
+
+  Block 2 (Temporal separable convolution):
+    - SeparableConv2D: F2=16 filters, kernel_size=(1, 16), padding='same', no bias
+    - BatchNormalization (axis=1)
+    - ELU activation
+    - AveragePooling2D: pool_size=(1, 8)
+    - Dropout: rate=0.5
+
+  Classifier:
+    - Flatten: (None, 496)
+    - Dense: 4 units, softmax activation, max_norm(0.25)
+
+Training Configuration:
+  - Optimizer: Adam (learning_rate=1e-3)
+  - Loss: sparse_categorical_crossentropy
+  - Batch size: 32
+  - Max epochs: 300
+  - EarlyStopping: monitor='val_loss', patience=20, restore_best_weights=True
+  - ReduceLROnPlateau: monitor='val_loss', factor=0.5, patience=10, min_lr=1e-5
+  - Validation split: 20%
+
+Within-Subject Results (Subject 1, Train=A01T.gdf, Test=A01E.gdf):
+  - Overall Accuracy: 66.67%
+  - Cohen's kappa: 0.5556
+
+  Per-class performance:
+    +------------+-----------+--------+----------+---------+
+    | Class      | Precision | Recall | F1-score | Support |
+    +============+===========+========+==========+=========+
+    | Left Hand  |      0.79 |   0.67 |     0.72 |      72 |
+    | Right Hand |      0.79 |   0.94 |     0.86 |      72 |
+    | Feet       |      0.50 |   0.53 |     0.51 |      72 |
+    | Tongue     |      0.58 |   0.53 |     0.55 |      72 |
+    +------------+-----------+--------+----------+---------+
+    | macro avg  |      0.67 |   0.67 |     0.66 |     288 |
+    | weighted   |      0.67 |   0.67 |     0.66 |     288 |
+    +------------+-----------+--------+----------+---------+
+
+  Best class: Right Hand (F1=0.86, recall=0.94)
+  Worst class: Feet (F1=0.51, precision=0.50)
+
+Cross-Subject Evaluation (LOSO):
+  - Function defined but not executed in the saved notebook
+  - Design: Leave-One-Subject-Out, train on 8 subjects, test on held-out
+  - Uses same EEGNet architecture with EarlyStopping(patience=15)
+  - Validation split: 10% during training
+
+Environment:
+  - MNE version: 1.11.0
+  - TensorFlow version: 2.21.0
+  - Model saved as: models/eegnet_subject1.keras
+
+GDF Annotation Codes (for evaluation files):
+  - 768: start of trial
+  - 769: left hand (class 1)
+  - 770: right hand (class 2)
+  - 771: feet (class 3)
+  - 772: tongue (class 4)
+  - 783: cue unknown (used in evaluation files, true labels in .mat)
+  - 276: idling EEG (eyes open)
+  - 277: idling EEG (eyes closed)
+  - 1023: rejected trial
+  - 1072: eye movement
+  - 32766: start of new run
+
+================================================================================
+END OF EXTRACTION
+================================================================================
