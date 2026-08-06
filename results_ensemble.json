@@ -14,7 +14,7 @@
     "solo_accuracy_min": 0.5763888888888888,
     "solo_accuracy_max": 0.9236111111111112,
     "solo_accuracy_median": 0.8819444444444444,
-    "val_cutoff": 0.7474878382685869,
+    "val_cutoff": 0.7474612228070882,
     "seeds_kept_by_val_rule": [
       0,
       1,
@@ -97,7 +97,7 @@
     "solo_accuracy_min": 0.7083333333333334,
     "solo_accuracy_max": 0.7569444444444444,
     "solo_accuracy_median": 0.7291666666666666,
-    "val_cutoff": 0.7196049906755787,
+    "val_cutoff": 0.7194978903921226,
     "seeds_kept_by_val_rule": [
       0,
       1
