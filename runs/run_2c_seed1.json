@@ -1,0 +1,52 @@
+{
+  "seed": 1,
+  "n_classes": 2,
+  "n_train_orig": 116,
+  "n_train_aug": 696,
+  "n_val": 28,
+  "n_test": 144,
+  "epochs_run": 75,
+  "best_val_acc": 0.9642857313156128,
+  "final_val_acc": 0.9285714030265808,
+  "test_accuracy": 0.8819444444444444,
+  "test_kappa": 0.7638888888888888,
+  "mean_confidence_correct": 0.8774303197860718,
+  "mean_confidence_incorrect": 0.7292630076408386,
+  "confusion_matrix": [
+    [
+      67,
+      5
+    ],
+    [
+      12,
+      60
+    ]
+  ],
+  "report": {
+    "0": {
+      "precision": 0.8481012658227848,
+      "recall": 0.9305555555555556,
+      "f1-score": 0.8874172185430463,
+      "support": 72.0
+    },
+    "1": {
+      "precision": 0.9230769230769231,
+      "recall": 0.8333333333333334,
+      "f1-score": 0.8759124087591241,
+      "support": 72.0
+    },
+    "accuracy": 0.8819444444444444,
+    "macro avg": {
+      "precision": 0.8855890944498539,
+      "recall": 0.8819444444444444,
+      "f1-score": 0.8816648136510852,
+      "support": 144.0
+    },
+    "weighted avg": {
+      "precision": 0.885589094449854,
+      "recall": 0.8819444444444444,
+      "f1-score": 0.8816648136510852,
+      "support": 144.0
+    }
+  }
+}

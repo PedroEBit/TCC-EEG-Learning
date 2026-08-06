@@ -15,10 +15,12 @@ venv/
 .vscode/
 *.swp
 
-# Data (large files)
+# Data (large files) - baixar do BCI Competition IV, ver README
 data/
 models/*.keras
 models/*.h5
+# ...exceto os dois modelos finais (~115 KB cada), para reproduzir a avaliacao
+!models/eegnet_a01_*class_seed*.keras
 
 # OS
 *.stackdump
@@ -29,5 +31,11 @@ Desktop.ini
 # Claude Code
 .claude/
 
-# OpenBCI subproject git
-OpenBCIOnlineProtocol/.git/
+# Subprojeto OpenBCI (repo git proprio; nao versionar como gitlink quebrado)
+OpenBCIOnlineProtocol/
+
+# Notebooks de aula (uso pessoal, nao sao entregaveis do TCC)
+explicando_ensemble.ipynb
+
+# Figura solta na raiz, gerada em exploracao
+cm_4class_existing.png
