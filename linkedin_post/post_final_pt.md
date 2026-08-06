@@ -23,7 +23,7 @@ Acurácia de 2 classes nas cinco sementes: 88.2%, 88.2%, 92.4%, **57.6%**, 86.8%
 
 **O que eu fiz a respeito**
 
-Parei de escolher um modelo. Passei a fazer a média das saídas softmax de todas as sementes. E o ponto decisivo: cada semente sorteia também a própria partição treino/validação, então cada membro viu 115 dos 144 trials, um subconjunto diferente — e eles erram em trials diferentes. A discordância média entre pares é 0.23. É essa descorrelação que faz a média funcionar.
+Parei de escolher um modelo. Passei a fazer a média das saídas softmax de todas as sementes. E o ponto decisivo: cada semente sorteia também a própria partição treino/validação, então cada membro viu 116 dos 144 trials, um subconjunto diferente — e eles erram em trials diferentes. A discordância média entre pares é 0.23. É essa descorrelação que faz a média funcionar.
 
 Resultados na sessão de teste, within-subject, sujeito A01:
 · 2 classes (mão esquerda vs. direita): **91.0% de acurácia, κ = 0.819**

@@ -23,7 +23,7 @@ Then I ran it five times with different random seeds, and the result fell apart.
 
 **What I did about it**
 
-Stopped picking a model. Averaged the softmax outputs of all the seeds instead. Crucially, each seed also draws its own train/validation partition, so each member has seen a different 115 of the 144 trials and they make substantially different errors — mean pairwise disagreement is 0.23. That decorrelation is the whole reason averaging works.
+Stopped picking a model. Averaged the softmax outputs of all the seeds instead. Crucially, each seed also draws its own train/validation partition, so each member has seen a different 116 of the 144 trials and they make substantially different errors — mean pairwise disagreement is 0.23. That decorrelation is the whole reason averaging works.
 
 Results on the held-out session, within-subject, subject A01:
 · 2-class (left vs. right hand): **91.0% accuracy, κ = 0.819**

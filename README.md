@@ -27,7 +27,7 @@ not be compared directly against the nine-subject means usually quoted in the li
 
 | | Trials |
 |---|---|
-| Train (`A01T`), 2-class | 144 → 115 train / 29 validation → 690 after augmentation |
+| Train (`A01T`), 2-class | 144 → 116 train / 28 validation → 696 after augmentation |
 | Train (`A01T`), 4-class | 288 → 232 train / 56 validation → 1392 after augmentation |
 | Test (`A01E`), 2-class | 144, untouched |
 | Test (`A01E`), 4-class | 288, untouched |
@@ -50,8 +50,8 @@ classification reports are in `results_final.json`.
 
 The **4-class model is far more stable than the 2-class one** (± 2.4% vs ± 14.1%), which
 is the opposite of what task difficulty alone would predict. It has twice the training
-data — 232 trials against 115 — and, just as importantly, a 56-trial validation set
-instead of 29, so early stopping has a usable signal. Data quantity, not task difficulty,
+data — 232 trials against 116 — and, just as importantly, a 56-trial validation set
+instead of 28, so early stopping has a usable signal. Data quantity, not task difficulty,
 is what governs reliability at this scale.
 
 ### Seed ensemble
@@ -127,7 +127,7 @@ when it has enough trials.** Fed the full 4–40 Hz range, the 4-class model (23
 trials) puts 7 of its 8 learned filters at peaks between 10.7 and 17.6 Hz, and theta
 (4–8 Hz) energy is under 1% in *every one of them*. Nobody told it which band mattered.
 
-The 2-class model (115 training trials) manages this for only 4 of 8 filters; the other
+The 2-class model (116 training trials) manages this for only 4 of 8 filters; the other
 four degenerate to peaks below 4 Hz — outside the input passband entirely, where there is
 no signal to respond to. Halving the training data halves the number of filters that learn
 anything. `fig3_temporal_filters.png` shows both models side by side; this contrast is the
@@ -173,9 +173,19 @@ The `.gdf` recordings are not in this repository (~600 MB).
 3. Install and run:
    ```bash
    pip install -r requirements.txt
-   python train_final.py     # ~40 min on CPU, 5 seeds (2-class) + 3 seeds (4-class)
+   python train_final.py     # ~50 min on CPU, 5 seeds (2-class) + 3 seeds (4-class)
+   python ensemble.py
    python make_figures.py
    ```
+
+`train_final.py` skips any seed whose `runs/*.json` and `models/*.keras` both exist, so
+it is resumable — but that also means a stale artifact is never refreshed. Delete both
+files for a seed to force it to retrain. The `.keras` files are tied to the Keras version
+that wrote them: models saved before Keras 3 embed `renorm` arguments in
+`BatchNormalization` that Keras 3.13 refuses to deserialize, so after a major upgrade the
+seeds must be retrained before `ensemble.py` can load them. Training is deterministic
+given the seed — retraining all eight under Keras 3.13.2 / TensorFlow 2.21.0 reproduced
+every previously reported accuracy, kappa and epoch count exactly.
 
 TensorFlow runs CPU-only here: GPU support is unavailable on native Windows for TF ≥ 2.11,
 and the DirectML plugin does not implement `channels_first` backpropagation, which EEGNet's
@@ -188,10 +198,24 @@ depthwise convolution requires.
   92.4%; one collapses. Any single-run number from this pipeline — including the 88.9%
   this project originally reported — is a draw from that distribution, not a point
   estimate. This is why the results table below reports the spread.
-- The instability has an identifiable cause: early stopping selects on a 29-trial
+- The instability has an identifiable cause: early stopping selects on a 28-trial
   validation set (2-class), which is far too small for `val_loss` to be a stable signal.
   The collapsing seed stopped at 41 epochs. Nested cross-validation, or ensembling across
   seeds, is the correct fix and is not implemented here.
+- **`A01E` was consulted at every design decision, so these numbers are an upper bound.**
+  The baseline, the passband, the adoption of augmentation, the move to 2 classes and the
+  choice of ensemble variant were each evaluated on the same 144 (or 288) test trials, and
+  the option that scored higher was kept. That is model selection on the test set, one
+  decision at a time — the experimenter, not the network, is the optimizer, and the test
+  session has in practice been serving as a second validation set. Part of every observed
+  gap is noise specific to these trials, and retaining the winner retains that noise, so
+  the reported accuracy is optimistic relative to a session that had never been looked at.
+  Decisions with an independent justification do not spend the test set — the 8–30 Hz
+  passband follows from mu and beta being the rhythms that desynchronise during motor
+  imagery, and would have been chosen without running anything. Decisions made *because the
+  number went up* do. No correction is applied here; a clean estimate needs a session, or a
+  subject, that has never been evaluated.
+
 - Single subject (A01). Nothing here says the model transfers across subjects — on this
   dataset it generally does not without adaptation.
 - 4 s decision windows, so latency is ~4 s. Too slow for responsive game control.
