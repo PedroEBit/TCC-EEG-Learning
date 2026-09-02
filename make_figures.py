@@ -78,7 +78,10 @@ print('fig2_confidence_distribution.png')
 from scipy.fft import rfft, rfftfreq
 
 # Os dois modelos lado a lado: com 232 trials (4-class) quase todos os filtros
-# convergem para mu/beta; com 115 (2-class) metade degenera para quase-DC.
+# convergem para mu/beta; com 116 (2-class) metade degenera para quase-DC.
+# O tamanho de treino vem dos runs, para o rotulo nunca divergir do pipeline.
+N_TRAIN = {json.loads(f.read_text())['n_classes']: json.loads(f.read_text())['n_train_orig']
+           for f in (ROOT / 'runs').glob('run_*_seed0.json')}
 fig, axes = plt.subplots(4, 4, figsize=(14, 11))
 peaks = {}
 for row_pair, (n_classes, fname, _) in zip(((0, 1), (2, 3)), reversed(SPECS)):
@@ -105,7 +108,7 @@ for row_pair, (n_classes, fname, _) in zip(((0, 1), (2, 3)), reversed(SPECS)):
             ax.set_xlabel('Hz', fontsize=8)
     n_in = sum(1 for p in pk_list if 8 <= p <= 30)
     peaks[n_classes] = pk_list
-    n_trials = {2: 115, 4: 232}[n_classes]
+    n_trials = N_TRAIN[n_classes]
     axes[row_pair[0]][0].set_ylabel(
         f'{n_classes}-class model\n({n_trials} train trials)\n'
         f'{n_in}/8 filters in 8–30 Hz', fontsize=10)

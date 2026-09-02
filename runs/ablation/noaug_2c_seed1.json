@@ -1,0 +1,55 @@
+{
+  "seed": 1,
+  "n_classes": 2,
+  "augmented": false,
+  "n_train_orig": 116,
+  "n_train_aug": 116,
+  "n_val": 28,
+  "n_test": 144,
+  "epochs_run": 33,
+  "epochs_cap": 1200,
+  "val_acc_restored": 0.4642857142857143,
+  "best_val_acc": 0.5714285969734192,
+  "final_val_acc": 0.4285714328289032,
+  "test_accuracy": 0.5277777777777778,
+  "test_kappa": 0.05555555555555558,
+  "mean_confidence_correct": 0.5020537376403809,
+  "mean_confidence_incorrect": 0.5021299719810486,
+  "confusion_matrix": [
+    [
+      35,
+      37
+    ],
+    [
+      31,
+      41
+    ]
+  ],
+  "report": {
+    "0": {
+      "precision": 0.5303030303030303,
+      "recall": 0.4861111111111111,
+      "f1-score": 0.5072463768115942,
+      "support": 72.0
+    },
+    "1": {
+      "precision": 0.5256410256410257,
+      "recall": 0.5694444444444444,
+      "f1-score": 0.5466666666666666,
+      "support": 72.0
+    },
+    "accuracy": 0.5277777777777778,
+    "macro avg": {
+      "precision": 0.5279720279720279,
+      "recall": 0.5277777777777778,
+      "f1-score": 0.5269565217391304,
+      "support": 144.0
+    },
+    "weighted avg": {
+      "precision": 0.5279720279720279,
+      "recall": 0.5277777777777778,
+      "f1-score": 0.5269565217391304,
+      "support": 144.0
+    }
+  }
+}

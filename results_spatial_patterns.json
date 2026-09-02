@@ -1,0 +1,160 @@
+{
+  "2class": {
+    "n_classes": 2,
+    "sensorimotor_channels": [
+      "C5",
+      "C3",
+      "C1",
+      "Cz",
+      "C2",
+      "C4",
+      "C6",
+      "CP3",
+      "CP1",
+      "CPz",
+      "CP2",
+      "CP4"
+    ],
+    "chance_level": 0.5454545454545454,
+    "sensorimotor_mass_mean": 0.4897998875791359,
+    "sensorimotor_mass_min": 0.4779642582745859,
+    "sensorimotor_mass_max": 0.5231489645550338,
+    "mean_rank_C3_C4": 17.5,
+    "per_seed": [
+      {
+        "seed": 0,
+        "sensorimotor_mass": 0.48195928105676694,
+        "rank_C3": 20,
+        "rank_C4": 13,
+        "top3_channels": [
+          "FC1",
+          "Fz",
+          "FC3"
+        ]
+      },
+      {
+        "seed": 1,
+        "sensorimotor_mass": 0.4807171863449391,
+        "rank_C3": 20,
+        "rank_C4": 19,
+        "top3_channels": [
+          "POz",
+          "P1",
+          "Pz"
+        ]
+      },
+      {
+        "seed": 2,
+        "sensorimotor_mass": 0.4779642582745859,
+        "rank_C3": 14,
+        "rank_C4": 21,
+        "top3_channels": [
+          "POz",
+          "P1",
+          "Pz"
+        ]
+      },
+      {
+        "seed": 3,
+        "sensorimotor_mass": 0.5231489645550338,
+        "rank_C3": 19,
+        "rank_C4": 11,
+        "top3_channels": [
+          "FCz",
+          "FC2",
+          "Fz"
+        ]
+      },
+      {
+        "seed": 4,
+        "sensorimotor_mass": 0.48520974766435354,
+        "rank_C3": 21,
+        "rank_C4": 17,
+        "top3_channels": [
+          "FCz",
+          "Fz",
+          "FC1"
+        ]
+      }
+    ]
+  },
+  "4class": {
+    "n_classes": 4,
+    "sensorimotor_channels": [
+      "C5",
+      "C3",
+      "C1",
+      "Cz",
+      "C2",
+      "C4",
+      "C6",
+      "CP3",
+      "CP1",
+      "CPz",
+      "CP2",
+      "CP4"
+    ],
+    "chance_level": 0.5454545454545454,
+    "sensorimotor_mass_mean": 0.5115604272211733,
+    "sensorimotor_mass_min": 0.4988537429221575,
+    "sensorimotor_mass_max": 0.5325212952747582,
+    "mean_rank_C3_C4": 15.7,
+    "per_seed": [
+      {
+        "seed": 0,
+        "sensorimotor_mass": 0.4988537429221575,
+        "rank_C3": 17,
+        "rank_C4": 13,
+        "top3_channels": [
+          "P2",
+          "CP4",
+          "CP3"
+        ]
+      },
+      {
+        "seed": 1,
+        "sensorimotor_mass": 0.5033199190767746,
+        "rank_C3": 20,
+        "rank_C4": 15,
+        "top3_channels": [
+          "POz",
+          "P1",
+          "P2"
+        ]
+      },
+      {
+        "seed": 2,
+        "sensorimotor_mass": 0.5231033765875663,
+        "rank_C3": 19,
+        "rank_C4": 17,
+        "top3_channels": [
+          "P1",
+          "CP3",
+          "POz"
+        ]
+      },
+      {
+        "seed": 3,
+        "sensorimotor_mass": 0.5000038022446104,
+        "rank_C3": 19,
+        "rank_C4": 15,
+        "top3_channels": [
+          "Fz",
+          "FCz",
+          "FC1"
+        ]
+      },
+      {
+        "seed": 4,
+        "sensorimotor_mass": 0.5325212952747582,
+        "rank_C3": 20,
+        "rank_C4": 2,
+        "top3_channels": [
+          "CP4",
+          "C4",
+          "P2"
+        ]
+      }
+    ]
+  }
+}

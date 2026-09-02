@@ -1,0 +1,76 @@
+{
+  "2class": {
+    "n_seeds": 5,
+    "with_augmentation_mean": 0.826388888888889,
+    "with_augmentation_std": 0.14129854131510977,
+    "without_augmentation_mean": 0.6527777777777778,
+    "without_augmentation_std": 0.172426514137988,
+    "delta_mean": 0.17361111111111116,
+    "seeds_improved_by_augmentation": 5,
+    "seeds_hitting_epoch_cap": [],
+    "per_seed": [
+      {
+        "seed": 0,
+        "with_aug": 0.8819444444444444,
+        "without_aug": 0.8194444444444444
+      },
+      {
+        "seed": 1,
+        "with_aug": 0.8819444444444444,
+        "without_aug": 0.5277777777777778
+      },
+      {
+        "seed": 2,
+        "with_aug": 0.9236111111111112,
+        "without_aug": 0.8611111111111112
+      },
+      {
+        "seed": 3,
+        "with_aug": 0.5763888888888888,
+        "without_aug": 0.5069444444444444
+      },
+      {
+        "seed": 4,
+        "with_aug": 0.8680555555555556,
+        "without_aug": 0.5486111111111112
+      }
+    ]
+  },
+  "4class": {
+    "n_seeds": 5,
+    "with_augmentation_mean": 0.7388888888888888,
+    "with_augmentation_std": 0.03167153958608715,
+    "without_augmentation_mean": 0.6118055555555555,
+    "without_augmentation_std": 0.1980293295321132,
+    "delta_mean": 0.12708333333333333,
+    "seeds_improved_by_augmentation": 5,
+    "seeds_hitting_epoch_cap": [],
+    "per_seed": [
+      {
+        "seed": 0,
+        "with_aug": 0.7083333333333334,
+        "without_aug": 0.2604166666666667
+      },
+      {
+        "seed": 1,
+        "with_aug": 0.7569444444444444,
+        "without_aug": 0.7291666666666666
+      },
+      {
+        "seed": 2,
+        "with_aug": 0.7291666666666666,
+        "without_aug": 0.6597222222222222
+      },
+      {
+        "seed": 3,
+        "with_aug": 0.7152777777777778,
+        "without_aug": 0.7048611111111112
+      },
+      {
+        "seed": 4,
+        "with_aug": 0.7847222222222222,
+        "without_aug": 0.7048611111111112
+      }
+    ]
+  }
+}

@@ -50,6 +50,11 @@ def load_subject(subject_id, split='T', n_classes=4, l_freq=4.0, h_freq=40.0):
     raw = read_raw_gdf(str(DATA_DIR / f'A0{subject_id}{split}.gdf'),
                        preload=True, verbose=False)
     raw.pick_types(eeg=True)
+    # O GDF traz 22 canais EEG seguidos de 3 EOG, todos marcados como 'eeg' pelo
+    # MNE. O slice depende dessa ordem, entao ela e verificada explicitamente.
+    assert (raw.ch_names[N_CHANNELS - 1].startswith('EEG')
+            and all(c.startswith('EOG') for c in raw.ch_names[N_CHANNELS:])), (
+        f'ordem de canais inesperada: {raw.ch_names}')
     raw.pick(raw.ch_names[:N_CHANNELS])
     raw.filter(l_freq=l_freq, h_freq=h_freq, method='iir', verbose=False)
 
@@ -67,7 +72,12 @@ def load_subject(subject_id, split='T', n_classes=4, l_freq=4.0, h_freq=40.0):
                             baseline=None, preload=True, verbose=False)
         X = epochs.get_data().astype(np.float32)
         y = (loadmat(str(LABELS_DIR / f'A0{subject_id}E.mat'))['classlabel']
-             .flatten() - 1).astype(np.int32)[:len(X)]
+             .flatten() - 1).astype(np.int32)
+        # Os rotulos vem de um arquivo separado, alinhados pela ORDEM dos cues.
+        # Se o MNE descartar qualquer epoca o alinhamento quebra silenciosamente.
+        assert len(X) == len(events) == len(y), (
+            f'desalinhamento rotulo/epoca em A0{subject_id}E: '
+            f'{len(events)} cues, {len(X)} epocas, {len(y)} rotulos')
 
     if n_classes == 2:
         mask = np.isin(y, [0, 1])
@@ -135,7 +145,7 @@ def stratified_split(y, val_frac=0.2, rng=None):
     return np.sort(np.array(tr)), np.sort(np.array(va))
 
 
-def run(n_classes, seed, epochs, batch_size, patience, save_path=None):
+def run(n_classes, seed, epochs, batch_size, patience, save_path=None, augment=True):
     np.random.seed(seed)
     tf.random.set_seed(seed)
     tf.keras.utils.set_random_seed(seed)
@@ -150,8 +160,11 @@ def run(n_classes, seed, epochs, batch_size, patience, save_path=None):
     X_va, y_va = X_tr_full[va_idx], y_tr_full[va_idx]
 
     # augmentation so no treino; validacao e teste ficam limpos
-    X_tr_aug, y_tr_aug = augment_gaussian_noise(X_tr, y_tr, n_copies=5,
-                                                noise_std=0.1, rng=rng)
+    if augment:
+        X_tr_aug, y_tr_aug = augment_gaussian_noise(X_tr, y_tr, n_copies=5,
+                                                    noise_std=0.1, rng=rng)
+    else:
+        X_tr_aug, y_tr_aug = X_tr, y_tr
 
     model = build_eegnet(N_CHANNELS, X_tr.shape[-1], n_classes, SFREQ)
     model.compile(optimizer=tf.keras.optimizers.Adam(1e-3),
@@ -168,6 +181,11 @@ def run(n_classes, seed, epochs, batch_size, patience, save_path=None):
         ],
     )
 
+    # val_acc do modelo QUE FICOU (EarlyStopping restaura por val_loss, entao a
+    # epoca de melhor val_accuracy nao e necessariamente a restaurada).
+    val_acc_restored = float(
+        (model.predict(prepare(X_va), verbose=0).argmax(1) == y_va).mean())
+
     proba = model.predict(prepare(X_te), verbose=0)
     y_pred = np.argmax(proba, axis=1)
     acc = float((y_pred == y_te).mean())
@@ -180,10 +198,11 @@ def run(n_classes, seed, epochs, batch_size, patience, save_path=None):
         model.save(save_path)
 
     return {
-        'seed': seed, 'n_classes': n_classes,
+        'seed': seed, 'n_classes': n_classes, 'augmented': bool(augment),
         'n_train_orig': int(len(X_tr)), 'n_train_aug': int(len(X_tr_aug)),
         'n_val': int(len(X_va)), 'n_test': int(len(X_te)),
-        'epochs_run': len(hist.history['loss']),
+        'epochs_run': len(hist.history['loss']), 'epochs_cap': int(epochs),
+        'val_acc_restored': val_acc_restored,
         'best_val_acc': float(max(hist.history['val_accuracy'])),
         'final_val_acc': float(hist.history['val_accuracy'][-1]),
         'test_accuracy': acc, 'test_kappa': kappa,
@@ -195,9 +214,22 @@ def run(n_classes, seed, epochs, batch_size, patience, save_path=None):
 
 
 RUNS_DIR = ROOT / 'runs'
+ABLATION_DIR = RUNS_DIR / 'ablation'
+
+# Mesmo numero de sementes nas duas tarefas: com 3 sementes no 4-class o desvio
+# padrao reportado e a regra de descarte do ensemble ficavam mal estimados.
 CONFIGS = (
     [(2, s, dict(epochs=300, batch_size=32, patience=25)) for s in range(5)] +
-    [(4, s, dict(epochs=150, batch_size=64, patience=25)) for s in range(3)]
+    [(4, s, dict(epochs=150, batch_size=64, patience=25)) for s in range(5)]
+)
+
+# Ablacao do augmentation: mesma arquitetura, mesmo split, mesmo batch, mesma
+# paciencia -- so o augmentation e desligado. O teto de epocas e maior porque
+# sem as 5 copias cada epoca tem 6x menos passos de gradiente; o que encerra o
+# treino continua sendo o EarlyStopping (conferir epochs_run < epochs_cap).
+ABLATION_CONFIGS = (
+    [(2, s, dict(epochs=1200, batch_size=32, patience=25)) for s in range(5)] +
+    [(4, s, dict(epochs=600, batch_size=64, patience=25)) for s in range(5)]
 )
 
 
@@ -220,6 +252,46 @@ def collect():
     return results
 
 
+def collect_ablation():
+    """Compara, por tarefa, o pipeline com e sem augmentation."""
+    if not ABLATION_DIR.exists():
+        return {}
+    main = {(r['n_classes'], r['seed']): r
+            for r in (json.loads(f.read_text()) for f in RUNS_DIR.glob('run_*.json'))}
+    out = {}
+    for f in sorted(ABLATION_DIR.glob('noaug_*.json')):
+        r = json.loads(f.read_text())
+        out.setdefault(f"{r['n_classes']}class", []).append(r)
+    summary = {}
+    for key, runs in sorted(out.items()):
+        runs.sort(key=lambda r: r['seed'])
+        nc = runs[0]['n_classes']
+        paired = [(main[(nc, r['seed'])]['test_accuracy'], r['test_accuracy'])
+                  for r in runs if (nc, r['seed']) in main]
+        aug = np.array([p[0] for p in paired]); noaug = np.array([p[1] for p in paired])
+        capped = [r['seed'] for r in runs if r['epochs_run'] >= r['epochs_cap']]
+        summary[key] = {
+            'n_seeds': len(paired),
+            'with_augmentation_mean': float(aug.mean()),
+            'with_augmentation_std': float(aug.std(ddof=1)),
+            'without_augmentation_mean': float(noaug.mean()),
+            'without_augmentation_std': float(noaug.std(ddof=1)),
+            'delta_mean': float(aug.mean() - noaug.mean()),
+            'seeds_improved_by_augmentation': int((aug > noaug).sum()),
+            'seeds_hitting_epoch_cap': capped,
+            'per_seed': [{'seed': r['seed'], 'with_aug': a, 'without_aug': n}
+                         for r, a, n in zip(runs, aug, noaug)],
+        }
+        print(f'{key}: com aug {aug.mean():.4f} +/- {aug.std(ddof=1):.4f} | '
+              f'sem aug {noaug.mean():.4f} +/- {noaug.std(ddof=1):.4f} | '
+              f'delta {aug.mean() - noaug.mean():+.4f} | '
+              f'melhora em {int((aug > noaug).sum())}/{len(paired)} sementes')
+        if capped:
+            print(f'  ! sementes que bateram o teto de epocas: {capped}')
+    (ROOT / 'results_ablation.json').write_text(json.dumps(summary, indent=2))
+    return summary
+
+
 def model_path(n_classes, seed):
     return MODELS_DIR / f'eegnet_a01_{n_classes}class_seed{seed}.keras'
 
@@ -227,7 +299,7 @@ def model_path(n_classes, seed):
 if __name__ == '__main__':
     # Cada run e gravado assim que termina, entao a execucao e retomavel:
     # rodar de novo so refaz o que estiver faltando. Todo seed salva seu modelo,
-    # porque o ensemble precisa de todos eles (ver explicando_ensemble.ipynb).
+    # porque o ensemble precisa de todos eles.
     RUNS_DIR.mkdir(exist_ok=True)
     for n_classes, seed, kw in CONFIGS:
         out = RUNS_DIR / f'run_{n_classes}c_seed{seed}.json'
@@ -238,9 +310,26 @@ if __name__ == '__main__':
         r = run(n_classes, seed, save_path=save, **kw)
         out.write_text(json.dumps(r, indent=2))
         print(f"[{n_classes}-class seed {seed}] acc={r['test_accuracy']:.4f} "
-              f"kappa={r['test_kappa']:.4f} val={r['best_val_acc']:.3f} "
+              f"kappa={r['test_kappa']:.4f} val={r['val_acc_restored']:.3f} "
               f"({r['epochs_run']} ep)", flush=True)
+
+    # Ablacao: nenhum modelo e salvo, ela so existe para justificar o augmentation.
+    ABLATION_DIR.mkdir(parents=True, exist_ok=True)
+    for n_classes, seed, kw in ABLATION_CONFIGS:
+        out = ABLATION_DIR / f'noaug_{n_classes}c_seed{seed}.json'
+        if out.exists():
+            print(f'[no-aug {n_classes}-class seed {seed}] ja existe, pulando', flush=True)
+            continue
+        r = run(n_classes, seed, augment=False, **kw)
+        out.write_text(json.dumps(r, indent=2))
+        print(f"[no-aug {n_classes}-class seed {seed}] acc={r['test_accuracy']:.4f} "
+              f"kappa={r['test_kappa']:.4f} ({r['epochs_run']} ep)", flush=True)
 
     print()
     collect()
-    print('\nresults_final.json salvo.')
+    print()
+    print('results_final.json salvo.')
+    print()
+    collect_ablation()
+    print()
+    print('results_ablation.json salvo.')

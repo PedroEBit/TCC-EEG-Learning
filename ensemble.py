@@ -9,12 +9,15 @@ desse erro.
 Cada semente difere em quatro coisas: inicializacao dos pesos, mascaras de
 dropout, ordem dos batches e -- o mais importante aqui -- a particao
 treino/validacao, porque stratified_split e derivado da mesma seed. Ou seja,
-cada modelo viu 115 dos 144 trials, um subconjunto diferente. Isso e o que
+cada modelo viu 116 dos 144 trials, um subconjunto diferente. Isso e o que
 descorrelaciona os erros e e a condicao para o ensemble funcionar.
 
 REGRA METODOLOGICA: nenhuma decisao sobre quais modelos entram no ensemble
-pode olhar para o teste. A regra de descarte aqui usa apenas best_val_acc,
-medida no split de validacao limpo de cada semente.
+pode olhar para o teste. A regra de descarte usa apenas val_acc_restored -- a
+acuracia do modelo efetivamente restaurado pelo EarlyStopping no split de
+validacao limpo daquela semente. Nao se usa best_val_acc (o pico de
+val_accuracy ao longo do treino), porque o EarlyStopping restaura por val_loss:
+a epoca do pico de acuracia nao e necessariamente a epoca que ficou.
 """
 
 import json
@@ -40,7 +43,7 @@ def load_seed_models(n_classes):
             continue
         members.append({
             'seed': meta['seed'],
-            'val_acc': meta['best_val_acc'],
+            'val_acc': meta['val_acc_restored'],
             'solo_acc': meta['test_accuracy'],
             'model': tf.keras.models.load_model(p, compile=False),
         })
@@ -115,8 +118,11 @@ def evaluate(n_classes, verbose=True):
     solo = np.array([m['solo_acc'] for m in members])
     val = np.array([m['val_acc'] for m in members])
 
-    # Regra de descarte fixada a priori e calculada SO na validacao:
-    # descarta membros a mais de 1 desvio-padrao abaixo da media de val_acc.
+    # Regra de descarte fixada a priori e calculada SO na validacao: descarta
+    # membros a mais de 1 desvio-padrao abaixo da media de val_acc_restored.
+    # Cada semente tem seu proprio split de 28 (ou 56) trials, entao esses
+    # valores nao sao estritamente comparaveis entre si -- e a razao de a regra
+    # ser reportada como variante secundaria, e nao como resultado principal.
     cut = val.mean() - val.std(ddof=1)
     keep = val >= cut
     kept_seeds = [m['seed'] for m, k in zip(members, keep) if k]
@@ -130,6 +136,7 @@ def evaluate(n_classes, verbose=True):
         'solo_accuracy_min': float(solo.min()),
         'solo_accuracy_max': float(solo.max()),
         'solo_accuracy_median': float(np.median(solo)),
+        'val_metric': 'val_acc_restored',
         'val_cutoff': float(cut),
         'seeds_kept_by_val_rule': kept_seeds,
         'mean_pairwise_disagreement': float(
