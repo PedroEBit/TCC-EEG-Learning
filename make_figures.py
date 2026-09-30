@@ -12,7 +12,7 @@ import tensorflow as tf
 
 from train_final import load_subject, prepare, SUBJECT_ID, MODELS_DIR, ROOT
 
-OUT = ROOT / 'linkedin_post'
+OUT = ROOT / 'figures'
 OUT.mkdir(exist_ok=True)
 sns.set_style('whitegrid')
 

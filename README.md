@@ -88,7 +88,8 @@ improvement is in the expected direction but 144 test trials are not enough to e
 
 Mean pairwise disagreement between members is 0.231 (2-class) and 0.242 (4-class) — the
 members make substantially different errors, which is the precondition for averaging to
-help at all.
+help at all. The SE ablation below is a direct test of that precondition: it makes the
+members more alike, and in 4-class the ensemble gets worse as a result.
 
 A secondary variant discards members more than one standard deviation below the mean
 *validation* accuracy — a rule computable without the test set, using the accuracy of the
@@ -116,6 +117,11 @@ holds up — 88.2% median, and the best-performing seed reaches 92.4% — but th
 figure does not: it settles around 74%. The earlier 80.2% benefited from broken early
 stopping, which let that model train far longer than a clean validation signal would have
 allowed. The notebook numbers should be read as superseded by the table above.
+
+The same applies to the notebook's other headline claim, the +8.6 points from its
+Squeeze-and-Excitation variant. Re-measured as a paired ablation it is worth no accuracy at
+all, though it turned out to be doing something else that does hold up. See
+[The Squeeze-and-Excitation block](#the-squeeze-and-excitation-block).
 
 ## Data augmentation
 
@@ -158,6 +164,105 @@ session file), but it did have to be fixed. In `train_final.py` the order is exp
 `stratified_split()` picks the validation indices from the *original* trials, and
 `augment_gaussian_noise()` is then applied to the training part only.
 
+## The Squeeze-and-Excitation block
+
+The course notebook's Exercise 8 asked for an architecture variant of my own. I added a
+Squeeze-and-Excitation gate over the spatial filters: global-average-pool each of the 16
+spatial feature maps to one number, pass those through a 16 → 4 → 16 bottleneck, and use
+the resulting sigmoid as a per-filter multiplier. The network gets to say which spatial
+filters matter for a given trial instead of weighting all 16 equally. It sits immediately
+after the ELU of `spatial_conv` and before the first `AveragePooling`, and it costs **148
+parameters** (3018 → 3166 in 2-class, 4012 → 4160 in 4-class, so +4.9% and +3.7%).
+
+In the notebook it took 4-class from 70.7% to 79.3%, and I recorded that as +8.6 points.
+**That number does not survive this repo's own standards**, for three independent reasons:
+it was `max(val_accuracy)` rather than the restored model, which is optimistic by up to 10
+points here; it was a random 80/20 split *within* `A01T`, not the held-out `A01E` session;
+and it was one run against one run, on tasks where the seed spread reaches 34.8 points.
+
+So it was rebuilt as a paired ablation in `se_ablation.py`: identical architecture,
+identical split, identical augmentation, identical batch size and patience, identical test
+session, five seeds per task, pairing seed-for-seed against the existing `runs/run_*.json`.
+Only the SE block is switched on.
+
+| | base | + SE | Δ mean | Δ median | seeds improved |
+|---|---|---|---|---|---|
+| 2-class | 82.6% ± 14.1% | **87.1% ± 2.4%** | +4.4 pts | −0.7 pts | 2 / 5 |
+| 4-class | 73.9% ± 3.2% | **74.4% ± 0.9%** | +0.6 pts | +1.7 pts | 3 / 5 |
+| κ, 2-class | 0.653 ± 0.283 | 0.742 ± 0.049 | | | |
+| κ, 4-class | 0.652 ± 0.042 | 0.659 ± 0.013 | | | |
+
+**There is no accuracy gain.** Paired Wilcoxon gives p = 1.00 (2-class) and p = 0.81
+(4-class); the sign test gives p = 1.00 for both. The +8.6 points of the notebook do not
+reproduce as an effect of the architecture, and the 2-class *median* actually drops.
+
+**There is a large variance reduction, and it is the only effect here that reaches
+significance.** The across-seed standard deviation falls by a factor of 33.7 in 2-class and
+11.4 in 4-class. Under the Pitman–Morgan test, which is the appropriate test for variances
+of *paired* samples, p = 0.016 and p = 0.030.
+
+The block compresses both tails, in both tasks:
+
+| | worst seed | best seed | range |
+|---|---|---|---|
+| 2-class, base | 57.6% | 92.4% | 34.8 pts |
+| 2-class, + SE | **84.7%** | 91.0% | **6.3 pts** |
+| 4-class, base | 70.8% | 78.5% | 7.7 pts |
+| 4-class, + SE | **72.9%** | 75.3% | **2.4 pts** |
+
+**The 4-class arm is the convincing one, precisely because there is no collapse there to
+rescue.** All five base seeds were already healthy at ± 3.2%, and the block still cut the
+range from 7.7 points to 2.4. That rules out the easy reading ("it only repairs the broken
+seed") and supports the stronger one: at this data scale the SE block behaves as a
+**regularizer, not as added capacity**. It does not raise the ceiling in either task; it
+lowers it slightly while raising the floor a lot.
+
+A third observation points the same way: the SE runs converge earlier. Median epochs before
+`EarlyStopping` fires go from 75 to 54 (2-class) and from 112 to 64 (4-class). Fewer epochs
+to a more consistent result is the signature of a constrained solution space, not of a model
+with more room to fit.
+
+### What it costs the ensemble
+
+Making the seeds behave alike makes them behave alike *as ensemble members too*, and member
+disagreement is the precondition for averaging to help at all:
+
+| | mean pairwise disagreement | hard vote |
+|---|---|---|
+| 2-class | 0.231 → **0.128** | 91.7% → **93.1%** (κ 0.861) |
+| 4-class | 0.242 → **0.214** | 77.4% → **75.7%** (κ 0.676) |
+
+In 4-class the trade-off shows up as predicted: less diversity, worse ensemble, 1.7 points
+below the base hard vote and 3.5 below the base soft vote (79.2%). In 2-class it does not,
+because there the base ensemble was being dragged down by a collapsed member, and removing
+the collapse more than pays for the lost diversity. The 93.1% is the best 2-class number in
+this repository, but it is 2 test trials away from the base hard vote, which is noise.
+
+Soft voting cannot be compared here: `run_se()` stores `y_pred` but not the softmax
+distributions, so only hard voting is available on the SE side. The comparison above is
+hard vote against hard vote.
+
+### Reported, not adopted
+
+The SE block is **not** in `train_final.py`, and every headline number in this README is
+plain EEGNet. That is deliberate. The mean-accuracy effect is not established, so the only
+reason to adopt the block would be that its variance looks better *on `A01E`* — the same
+held-out session that Limitations already records as having informed every other design
+decision. Adopting it on that basis would be one more instance of exactly the error
+documented there. The ablation is reported; the pipeline is unchanged.
+
+Worth stating on the other side of the ledger: unlike the passband, the class count and the
+choice of ensemble variant, **the SE block was never selected by looking at `A01E`**. It was
+written for a notebook exercise against a within-session split, and the ablation was run
+afterwards. Together with the augmentation ablation, this is one of the two comparisons in
+the project that test-set selection does not contaminate.
+
+Caveats: five seeds per task, so the Pitman–Morgan test has 3 degrees of freedom and those
+p-values are suggestive rather than settled. The test also assumes bivariate normality,
+which the 2-class base violates outright, since that distribution is bimodal (collapse
+versus no collapse). Single subject A01, as everywhere else here. Per-seed numbers are in
+`results_se_ablation.json`; the runs themselves in `runs/se/`.
+
 ## What the network actually learned
 
 **The temporal convolution does converge on the physiologically relevant bands — but only
@@ -196,22 +301,27 @@ Full per-seed values are in `results_spatial_patterns.json`.
 
 ```
 eeg_fundamentos_e_arquitetura.ipynb   Course notebook: EEG signal, frequency bands,
-                                      EEGNet layer by layer, ablations, filter inspection
+                                      EEGNet layer by layer, ablations, filter inspection,
+                                      and the Squeeze-and-Excitation variant (Exercise 8)
 eegnet_motor_imagery.ipynb            First 4-class baseline (no augmentation)
 eegnet_mi_improvements.ipynb          Improvement path: 2-class, band tuning, augmentation
 train_final.py                        Clean, seeded, reproducible final pipeline
                                       (main runs + the augmentation ablation)
 ensemble.py                           Seed ensemble: soft/hard voting, McNemar, diversity
 spatial_patterns.py                   Haufe patterns of the depthwise conv (C3/C4 question)
+se_ablation.py                        Squeeze-and-Excitation ablation: the Exercise 8 block
+                                      under the final protocol, paired seed by seed
 make_figures.py                       Regenerates the figures from the saved models
 runs/run_*.json                       One JSON per seed, written as each run finishes
 runs/ablation/noaug_*.json            Same pipeline with augmentation switched off
+runs/se/se_*.json                     Same pipeline with the SE block switched on
 results_final.json                    Full per-seed metrics and classification reports
 results_ensemble.json                 Ensemble metrics for both tasks
 results_ablation.json                 Paired with/without-augmentation comparison
+results_se_ablation.json              Paired with/without-SE comparison
 results_spatial_patterns.json         Sensorimotor mass and C3/C4 ranks per seed
 models/                               Final trained models (~100–115 KB each)
-linkedin_post/                        Figures and post draft
+figures/                              Figures produced by make_figures.py
 ```
 
 ## Reproducing
@@ -233,6 +343,7 @@ The `.gdf` recordings are not in this repository (~600 MB).
    python train_final.py     # ~90 min on CPU: 5 seeds per task, plus the ablation
    python ensemble.py
    python spatial_patterns.py
+   python se_ablation.py     # ~40 min on CPU: 5 seeds per task with the SE block
    python make_figures.py
    ```
 
@@ -249,7 +360,11 @@ was run under. The 2-class models and 4-class seeds 0–2 were trained under Ker
 TensorFlow 2.21.0 / MNE 1.12.1 / NumPy 2.4.4. Two seeds retrained from scratch under 3.14.0
 reproduced their 3.13.2 accuracy, kappa, confusion matrix and epoch count *exactly*, and all
 ten saved models in `models/` reproduce the metrics recorded in their `runs/*.json` when
-evaluated under 3.14.0. Each `.keras` file records the version that wrote it, in its
+evaluated under 3.14.0. The SE runs in `runs/se/` span environments the same way: 2-class and
+4-class seeds 0–1 were trained first, 4-class seeds 2–4 later under the pinned versions above.
+Seeds 0 and 1 of the 4-class arm were retrained from scratch under the pinned environment as a
+check and reproduced their accuracy and epoch count exactly (75.35% / 105 epochs and 75.00% /
+75 epochs), so the SE comparison is not an artefact of mixing environments. Each `.keras` file records the version that wrote it, in its
 `metadata.json`.
 
 TensorFlow runs CPU-only here: GPU support is unavailable on native Windows for TF ≥ 2.11,
@@ -267,7 +382,9 @@ depthwise convolution requires.
   validation set (2-class), which is far too small for `val_loss` to be a stable signal.
   The collapsing seed stopped at 41 epochs. Ensembling across seeds is implemented here and
   does address the variance; nested cross-validation, which would also give an unbiased
-  estimate of the selection itself, is not.
+  estimate of the selection itself, is not. A second thing that addresses it, measured but
+  deliberately not adopted, is the SE block: it cuts the across-seed standard deviation by
+  33.7× in 2-class and 11.4× in 4-class without changing mean accuracy.
 - Validation accuracy is recorded as `val_acc_restored` — the accuracy of the model
   `EarlyStopping` actually restored. The obvious alternative, the peak `val_accuracy` seen
   during training, is optimistic by up to 10 points here (seed 3, 2-class: 67.9% peak vs

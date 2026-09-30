@@ -39,3 +39,9 @@ explicando_ensemble.ipynb
 
 # Figura solta na raiz, gerada em exploracao
 cm_4class_existing.png
+
+# Logs de execucao
+*.log
+
+# Material de divulgacao (fica no disco, fora do repo do paper)
+linkedin_post/
