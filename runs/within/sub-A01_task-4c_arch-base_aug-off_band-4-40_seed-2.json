@@ -1,0 +1,112 @@
+{
+  "config": {
+    "experiment": "within",
+    "subject": 1,
+    "source_subject": null,
+    "n_classes": 4,
+    "arch": "base",
+    "augmented": false,
+    "band": [
+      4.0,
+      40.0
+    ],
+    "freeze": null,
+    "budget": null,
+    "seed": 2,
+    "git_commit": "67fa180",
+    "versions": {
+      "tensorflow": "2.21.0",
+      "keras": "3.14.0",
+      "mne": "1.12.1",
+      "numpy": "2.4.4"
+    },
+    "timestamp": null,
+    "migrated_from": "runs/ablation/noaug_4c_seed2.json",
+    "predictions_complete": false
+  },
+  "metrics": {
+    "test_accuracy": 0.6597222222222222,
+    "test_kappa": 0.5462962962962963,
+    "val_acc_restored": 0.6785714285714286,
+    "best_val_acc": 0.6964285969734192,
+    "final_val_acc": 0.6607142686843872,
+    "epochs_run": 197,
+    "epochs_cap": 600,
+    "confusion_matrix": [
+      [
+        44,
+        21,
+        3,
+        4
+      ],
+      [
+        3,
+        68,
+        0,
+        1
+      ],
+      [
+        9,
+        2,
+        34,
+        27
+      ],
+      [
+        1,
+        0,
+        27,
+        44
+      ]
+    ],
+    "report": {
+      "0": {
+        "precision": 0.7719298245614035,
+        "recall": 0.6111111111111112,
+        "f1-score": 0.6821705426356589,
+        "support": 72.0
+      },
+      "1": {
+        "precision": 0.7472527472527473,
+        "recall": 0.9444444444444444,
+        "f1-score": 0.8343558282208589,
+        "support": 72.0
+      },
+      "2": {
+        "precision": 0.53125,
+        "recall": 0.4722222222222222,
+        "f1-score": 0.5,
+        "support": 72.0
+      },
+      "3": {
+        "precision": 0.5789473684210527,
+        "recall": 0.6111111111111112,
+        "f1-score": 0.5945945945945946,
+        "support": 72.0
+      },
+      "accuracy": 0.6597222222222222,
+      "macro avg": {
+        "precision": 0.6573449850588008,
+        "recall": 0.6597222222222222,
+        "f1-score": 0.6527802413627781,
+        "support": 288.0
+      },
+      "weighted avg": {
+        "precision": 0.6573449850588009,
+        "recall": 0.6597222222222222,
+        "f1-score": 0.6527802413627781,
+        "support": 288.0
+      }
+    },
+    "n_train_orig": 232,
+    "n_train_aug": 232,
+    "n_val": 56,
+    "n_test": 288,
+    "mean_confidence_correct": 0.6339247226715088,
+    "mean_confidence_incorrect": 0.5444334745407104
+  },
+  "predictions": {
+    "y_true": null,
+    "y_pred": null,
+    "proba": null
+  }
+}

@@ -28,6 +28,7 @@ import tensorflow as tf
 from sklearn.metrics import cohen_kappa_score, confusion_matrix, classification_report
 
 from train_final import load_subject, prepare, MODELS_DIR, ROOT, RUNS_DIR, model_path
+import paths
 
 SUBJECT_ID = 1
 
@@ -35,8 +36,8 @@ SUBJECT_ID = 1
 def load_seed_models(n_classes):
     """Modelos e metadados de validacao de cada semente disponivel."""
     members = []
-    for f in sorted(RUNS_DIR.glob(f'run_{n_classes}c_seed*.json')):
-        meta = json.loads(f.read_text())
+    for meta in paths.load_flat('within', n_classes=n_classes,
+                                arch='base', augmented=True):
         p = model_path(n_classes, meta['seed'])
         if not p.exists():
             print(f'  ! modelo da seed {meta["seed"]} ausente, ignorando')

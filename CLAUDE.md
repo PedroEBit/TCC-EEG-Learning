@@ -270,7 +270,70 @@ ou melhora sem recuperar?** Qualquer das duas respostas vale publicar.
 
 ---
 
-## 8. Mapa dos arquivos
+## 8. Como os runs são salvos (LEIA ANTES DE CRIAR QUALQUER RUN)
+
+Tudo passa por **`paths.py`**. Não invente nome de arquivo à mão.
+
+**Nome, estilo BIDS** (`chave-valor` separados por `_`), em `runs/<experimento>/`:
+
+```
+runs/within/sub-A01_task-4c_arch-base_aug-on_band-4-40_seed-0.json
+runs/within/sub-A01_task-2c_arch-se_aug-on_band-4-40_seed-3.json
+runs/zeroshot/src-A01_sub-A05_task-4c_arch-base_band-4-40_seed-2.json
+runs/transfer/src-A01_sub-A05_task-4c_arch-base_freeze-temporal_budget-20_seed-1.json
+```
+
+Experimentos: `within` | `zeroshot` | `transfer`. Chave que não se aplica é omitida
+(um run within não tem `src-` nem `budget-`; zero-shot não tem `aug-`, porque não treina).
+
+**Schema de todo JSON**, três blocos:
+
+```json
+{ "config": {...}, "metrics": {...}, "predictions": {"y_true": [], "y_pred": [], "proba": []} }
+```
+
+O `config` carrega experimento, sujeito, sujeito-fonte, n_classes, arquitetura,
+augmentation, banda, política de congelamento, orçamento, semente, **commit do git**
+e **versões de biblioteca**. O nome do arquivo é conveniência para o olho; **o
+`config` dentro do arquivo é a fonte de verdade**, e é por ele que se filtra.
+
+**`proba` não é opcional em run novo.** Sem ele não dá para refazer soft vote,
+ECE ou calibração sem recarregar modelo, e isso já custou retrabalho duas vezes
+neste projeto.
+
+**API:**
+
+```python
+import paths
+paths.run_key(subject=5, n_classes=4, arch='base', seed=0, source_subject=1,
+              experiment='zeroshot')          # monta o nome
+paths.save_run(config, metrics, predictions)  # grava no lugar certo
+paths.load_runs('within', subject=1, arch='se')   # filtra pelo config
+paths.load_flat('within', arch='base')            # view achatada (código legado)
+```
+
+**Para ver o que já foi rodado:**
+
+```bash
+.venv\Scripts\python.exe paths.py            # tudo
+.venv\Scripts\python.exe paths.py zeroshot   # só um experimento
+```
+
+**Nota histórica:** os runs da fase A01 nasceram num esquema plano
+(`runs/run_4c_seed0.json`, `runs/ablation/`, `runs/se/`) e foram migrados para cá.
+Os 10 runs base tiveram `proba` recuperado recarregando os modelos salvos, e a
+migração foi verificada reproduzindo acurácia e matriz de confusão exatamente. Os
+runs `aug-off` e `arch-se` não têm `proba`, porque seus modelos nunca foram salvos
+(`config.predictions_complete` diz quais estão completos). Dois runs marcados
+`exclude_from_aggregation` são retreinos de checagem de ambiente.
+
+**Pendência:** o lado de *escrita* do `train_final.py` ainda grava no formato antigo
+e tem `SUBJECT_ID` fixo em 1. Parametrizar o sujeito e passar a usar
+`paths.save_run()` é tarefa do Pedro, na Fase 2.
+
+---
+
+## 9. Mapa dos arquivos
 
 | Arquivo | O que é |
 |---|---|
@@ -279,6 +342,7 @@ ou melhora sem recuperar?** Qualquer das duas respostas vale publicar.
 | `spatial_patterns.py` | padrões de Haufe da depthwise (a pergunta do C3/C4) |
 | `se_ablation.py` | ablação do bloco Squeeze-and-Excitation, pareada por semente |
 | `make_figures.py` | regenera as figuras em `figures/` a partir dos modelos salvos |
+| `paths.py` | **convenção de nomes e schema dos runs**; rodar direto lista o que já existe |
 | `results_*.json` | métricas por semente, ensemble, ablações, padrões espaciais |
 | `runs/`, `models/` | um JSON e um `.keras` por semente |
 | `*.ipynb` | notebooks de aula; é de onde veio o bloco SE (Exercício 8). Não são entregáveis |

@@ -20,6 +20,8 @@ import mne
 from mne.io import read_raw_gdf
 from scipy.io import loadmat
 
+import paths
+
 import tensorflow as tf
 tf.config.set_visible_devices(tf.config.list_physical_devices('CPU'))
 
@@ -236,8 +238,9 @@ ABLATION_CONFIGS = (
 def collect():
     """Agrega os runs individuais em results_final.json."""
     results = {'2class': [], '4class': []}
-    for f in sorted(RUNS_DIR.glob('run_*.json')):
-        r = json.loads(f.read_text())
+    for r in paths.load_flat('within', arch='base', augmented=True):
+        # as predicoes ficam no run individual; aqui so o resumo
+        r = {k: v for k, v in r.items() if k != 'predictions'}
         results[f"{r['n_classes']}class"].append(r)
     for key, runs in results.items():
         runs.sort(key=lambda r: r['seed'])
@@ -254,13 +257,10 @@ def collect():
 
 def collect_ablation():
     """Compara, por tarefa, o pipeline com e sem augmentation."""
-    if not ABLATION_DIR.exists():
-        return {}
     main = {(r['n_classes'], r['seed']): r
-            for r in (json.loads(f.read_text()) for f in RUNS_DIR.glob('run_*.json'))}
+            for r in paths.load_flat('within', arch='base', augmented=True)}
     out = {}
-    for f in sorted(ABLATION_DIR.glob('noaug_*.json')):
-        r = json.loads(f.read_text())
+    for r in paths.load_flat('within', arch='base', augmented=False):
         out.setdefault(f"{r['n_classes']}class", []).append(r)
     summary = {}
     for key, runs in sorted(out.items()):

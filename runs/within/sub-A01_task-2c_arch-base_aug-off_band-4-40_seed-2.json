@@ -1,0 +1,84 @@
+{
+  "config": {
+    "experiment": "within",
+    "subject": 1,
+    "source_subject": null,
+    "n_classes": 2,
+    "arch": "base",
+    "augmented": false,
+    "band": [
+      4.0,
+      40.0
+    ],
+    "freeze": null,
+    "budget": null,
+    "seed": 2,
+    "git_commit": "67fa180",
+    "versions": {
+      "tensorflow": "2.21.0",
+      "keras": "3.14.0",
+      "mne": "1.12.1",
+      "numpy": "2.4.4"
+    },
+    "timestamp": null,
+    "migrated_from": "runs/ablation/noaug_2c_seed2.json",
+    "predictions_complete": false
+  },
+  "metrics": {
+    "test_accuracy": 0.8611111111111112,
+    "test_kappa": 0.7222222222222222,
+    "val_acc_restored": 0.6785714285714286,
+    "best_val_acc": 0.7857142686843872,
+    "final_val_acc": 0.6071428656578064,
+    "epochs_run": 112,
+    "epochs_cap": 1200,
+    "confusion_matrix": [
+      [
+        65,
+        7
+      ],
+      [
+        13,
+        59
+      ]
+    ],
+    "report": {
+      "0": {
+        "precision": 0.8333333333333334,
+        "recall": 0.9027777777777778,
+        "f1-score": 0.8666666666666667,
+        "support": 72.0
+      },
+      "1": {
+        "precision": 0.8939393939393939,
+        "recall": 0.8194444444444444,
+        "f1-score": 0.855072463768116,
+        "support": 72.0
+      },
+      "accuracy": 0.8611111111111112,
+      "macro avg": {
+        "precision": 0.8636363636363636,
+        "recall": 0.8611111111111112,
+        "f1-score": 0.8608695652173913,
+        "support": 144.0
+      },
+      "weighted avg": {
+        "precision": 0.8636363636363636,
+        "recall": 0.8611111111111112,
+        "f1-score": 0.8608695652173913,
+        "support": 144.0
+      }
+    },
+    "n_train_orig": 116,
+    "n_train_aug": 116,
+    "n_val": 28,
+    "n_test": 144,
+    "mean_confidence_correct": 0.8123236298561096,
+    "mean_confidence_incorrect": 0.6378064155578613
+  },
+  "predictions": {
+    "y_true": null,
+    "y_pred": null,
+    "proba": null
+  }
+}

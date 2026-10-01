@@ -33,6 +33,8 @@ from tensorflow.keras.constraints import max_norm
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 
+import paths
+
 from train_final import (
     load_subject, prepare, augment_gaussian_noise, stratified_split,
     SFREQ, N_CHANNELS, SUBJECT_ID, ROOT, RUNS_DIR,
@@ -142,19 +144,19 @@ def run_se(n_classes, seed, epochs, batch_size, patience):
 
 def collect():
     """Pareia SE contra os runs base ja existentes, por semente."""
-    base = {}
-    for f in RUNS_DIR.glob('run_*.json'):
-        r = json.loads(f.read_text())
-        base[(r['n_classes'], r['seed'])] = r
+    base = {(r['n_classes'], r['seed']): r
+            for r in paths.load_flat('within', arch='base', augmented=True)}
 
     summary = {}
     for n_classes in (2, 4):
         rows = []
         for seed in range(5):
-            f = SE_DIR / f'se_{n_classes}c_seed{seed}.json'
-            if not f.exists() or (n_classes, seed) not in base:
+            hits = [r for r in paths.load_flat('within', n_classes=n_classes,
+                                               arch='se', augmented=True)
+                    if r['seed'] == seed]
+            if not hits or (n_classes, seed) not in base:
                 continue
-            se = json.loads(f.read_text())
+            se = hits[0]
             rows.append({'seed': seed,
                          'base': base[(n_classes, seed)]['test_accuracy'],
                          'se': se['test_accuracy'],
