@@ -38,6 +38,29 @@ Trials the recording marks as artifact-contaminated (event `1023`: 15 in `A01T`,
 `A01E`) are **kept**, in both training and test — the usual convention on this dataset,
 and dropping them from the test set would inflate the reported accuracy.
 
+### Subject split for the nine-subject work (declared 2026-10-01)
+
+Everything above this line is A01 only. The nine subjects are now on disk, so the work
+that follows needs a development/test split over *subjects*, and it is declared here
+before it is used.
+
+**Development: A01. Test: A02–A09, locked.**
+
+A01 is the development subject because it is already spent. As the Limitations section
+documents, `A01E` was consulted at every design decision in the single-subject phase, so
+nothing can make it clean again; naming it the development subject costs nothing that was
+not already paid, and it leaves eight never-inspected subjects for the paired tests of the
+transfer and mSEM phases. Every design decision from here — freezing policy, calibration
+budget, domain alignment, architecture — is taken on A01 and on validation splits of each
+`A0xT`, never on the A02–A09 evaluation sessions.
+
+The zero-shot transfer table is the one exception, and it is not a real one: it is purely
+descriptive and selects nothing. No variant was compared, kept or discarded on the basis
+of it. The split above was fixed before those runs were executed.
+
+This is a direct response to the methodological failure recorded in Limitations. It does
+not retroactively fix the A01 numbers, and it is not claimed to.
+
 ## Results
 
 Test set is the held-out `A01E` session. Every configuration was run with multiple random
@@ -297,6 +320,79 @@ concentrating on the electrodes the physiology would nominate.
 
 Full per-seed values are in `results_spatial_patterns.json`.
 
+## Cross-subject transfer: the zero-shot floor
+
+The five A01 models per task are applied, unchanged, to every subject's evaluation
+session. **Nothing is trained here** — no gradients, no fine-tuning, no adaptation. This
+measures the floor that any transfer method has to beat, and it is the denominator for the
+freezing experiments that follow. A01 is included as a control: there the model is at home
+and must reproduce the within-subject numbers above, which it does exactly, seed by seed.
+
+Chance is not 0.50 and 0.25. The exact one-sided binomial thresholds are **0.576** (2-class,
+n=144) and **0.295** (4-class, n=288); corrected for the 16 reported tests (8 test subjects
+× 2 tasks), **0.618** and **0.326**. A01 is the development subject and is not one of the 16.
+
+| Target | 2-class members | 2-class soft vote | 4-class members | 4-class soft vote |
+|---|---|---|---|---|
+| A01 *(dev, control)* | 0.826 ± 0.141 | 0.910 \*\* | 0.739 ± 0.032 | 0.792 \*\* |
+| A02 | 0.582 ± 0.026 | 0.632 \*\* | 0.248 ± 0.014 | 0.271 — |
+| A03 | 0.757 ± 0.114 | **0.854** \*\* | 0.515 ± 0.056 | **0.552** \*\* |
+| A04 | 0.574 ± 0.048 | 0.611 \* | 0.304 ± 0.009 | 0.299 \* |
+| A05 | 0.488 ± 0.027 | 0.493 — | 0.258 ± 0.022 | 0.281 — |
+| A06 | 0.624 ± 0.049 | 0.667 \*\* | 0.315 ± 0.029 | 0.313 \* |
+| A07 | 0.567 ± 0.026 | 0.597 \* | 0.308 ± 0.015 | 0.319 \* |
+| A08 | 0.696 ± 0.124 | **0.792** \*\* | 0.400 ± 0.045 | **0.458** \*\* |
+| A09 | 0.543 ± 0.047 | 0.569 — | 0.308 ± 0.062 | 0.285 — |
+
+\*\* above chance after Bonferroni over 16 tests; \* above chance uncorrected only; — not
+above chance. Five seeds per cell. Full per-seed values, kappas, confidences, pairwise
+disagreements and McNemar tests are in `results_zeroshot.json`.
+
+**Transfer is subject-pair specific, not uniformly absent.** Over the eight test subjects,
+the soft vote clears the corrected threshold for 4/8 in 2-class and 2/8 in 4-class. A03 and
+A08 transfer in both tasks (p < 1e-13). A05 transfers in neither — 0.493 in 2-class is below
+the 0.50 chance level outright. Writing "the model does not transfer across subjects" would
+be as wrong as writing that it does.
+
+Three of the 4-class cells (A04, A06, A07) sit between the uncorrected and corrected
+thresholds. Compared against a naive 0.25 they would each have been called a success.
+
+### The ensemble gain depends entirely on the baseline
+
+This is the part that changes the conclusion, and it goes against what the single-subject
+results suggested.
+
+| 2-class, 8 test subjects | gain | subjects improved | Wilcoxon |
+|---|---|---|---|
+| soft vote vs **mean of the five members** | +0.048 | 8/8 | p = 0.0039 |
+| soft vote vs the **member selected on validation** | +0.012 | 4/8 | p = 0.30 |
+
+In 4-class the second row is *negative* (−0.002, 5/8, p = 0.42).
+
+The mean of the members is not a classifier anyone uses; it includes the collapsed seeds.
+In practice one model is deployed, chosen on validation data. Against that baseline — here
+the member with the highest `val_acc_restored` on `A01T`, seed 1 in both tasks, selected
+without ever looking at any evaluation session — the seed ensemble is a coin flip across
+subjects. The clearest single case is **A09, 4-class**: the validation-selected member
+reaches 0.406, the soft vote 0.285, McNemar p < 0.0001 *against* the ensemble.
+
+Two caveats, in both directions. The p = 0.0039 on the 8/8 row is the smallest value a
+one-sided test on eight pairs can return; it means "all eight improved" and nothing
+stronger. And the A09 result may be validation selection getting lucky on one subject —
+eight subjects cannot distinguish that from validation selecting well in general.
+
+The 4-class ensemble advantage found on A01 (McNemar p = 0.013) **does not replicate**
+across the eight unseen subjects. That is the result this phase existed to obtain.
+
+### What this does not establish
+
+- Only **one source subject**. Every number here partly measures similarity to A01, not
+  transferability in general. Training on several subjects is a different regime.
+- These are not comparable to the ~77% nine-subject means in the literature, which are
+  within-subject.
+- No average over the nine subjects is reported as a result, because A01 is the development
+  subject and is at home.
+
 ## Repository layout
 
 ```
@@ -408,8 +504,16 @@ depthwise convolution requires.
   correction is applied here; a clean estimate needs a session, or a subject, that has
   never been evaluated.
 
-- Single subject (A01). Nothing here says the model transfers across subjects — on this
-  dataset it generally does not without adaptation.
+- **Every within-subject number above is subject A01.** The nine-subject within-subject
+  replication is in progress, not finished, and nothing in the results sections above has
+  been shown to hold for anyone but A01. The cross-subject section is the one part measured
+  on all nine; it establishes a zero-shot floor, not transferability in general, because it
+  has a single source subject.
+- The cross-subject results use one source subject and no domain alignment beyond the
+  per-epoch z-score — which normalises by a single scalar per epoch and therefore corrects
+  global gain without aligning the between-channel covariance that the spatial filter
+  actually consumes. Euclidean Alignment is the standard baseline here and is not yet run;
+  run configs carry an explicit `align` field so that arm is a filter, not a migration.
 - 4 s decision windows, so latency is ~4 s. Too slow for responsive game control.
 
 ## Next steps

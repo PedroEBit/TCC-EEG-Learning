@@ -30,7 +30,8 @@ RUNS_DIR = ROOT / 'runs'
 
 # Ordem canonica das chaves no nome do arquivo. Chave ausente (None) e omitida,
 # entao um run within-subject nao carrega `src-` nem `budget-`.
-KEY_ORDER = ('src', 'sub', 'task', 'arch', 'aug', 'band', 'freeze', 'budget', 'seed')
+KEY_ORDER = ('src', 'sub', 'task', 'arch', 'aug', 'band', 'align', 'freeze', 'budget',
+             'seed')
 
 EXPERIMENTS = ('within', 'zeroshot', 'transfer')
 
@@ -43,8 +44,8 @@ def _fmt_band(band):
 
 
 def run_key(*, subject, n_classes, arch='base', seed, augmented=True,
-            band=(4.0, 40.0), source_subject=None, freeze=None, budget=None,
-            experiment='within'):
+            band=(4.0, 40.0), align=None, source_subject=None, freeze=None,
+            budget=None, experiment='within'):
     """Monta o nome canonico (sem extensao) a partir da configuracao.
 
     subject / source_subject : int (1..9)
@@ -52,6 +53,10 @@ def run_key(*, subject, n_classes, arch='base', seed, augmented=True,
     arch                     : 'base' | 'se' | 'msem1' | 'msem3' | ...
     augmented                : bool
     band                     : (l_freq, h_freq)
+    align                    : None | 'ea-T' | 'ea-E'. None = so o z-score por epoca
+                               do prepare(), que e um escalar por epoca e nao alinha
+                               covariancia entre canais. 'ea-T'/'ea-E' = Euclidean
+                               Alignment com R-barra estimado na sessao T ou E do alvo.
     freeze                   : None | 'temporal' | 'temporal+spatial' | 'allbutclf'
     budget                   : None | int, trials do alvo liberados para fine-tuning
     """
@@ -66,6 +71,7 @@ def run_key(*, subject, n_classes, arch='base', seed, augmented=True,
         # zero-shot nao treina, entao augmentation nao se aplica e sai do nome
         'aug':    None if experiment == 'zeroshot' else ('on' if augmented else 'off'),
         'band':   _fmt_band(band),
+        'align':  align,
         'freeze': freeze,
         'budget': None if budget is None else str(budget),
         'seed':   str(seed),
@@ -100,8 +106,8 @@ def _versions():
 
 
 def make_config(*, subject, n_classes, arch='base', seed, augmented=True,
-                band=(4.0, 40.0), source_subject=None, freeze=None, budget=None,
-                experiment='within', **extra):
+                band=(4.0, 40.0), align=None, source_subject=None, freeze=None,
+                budget=None, experiment='within', **extra):
     """Bloco `config` que vai dentro de todo JSON de run.
 
     Inclui commit e versoes de biblioteca porque este projeto ja foi mordido por
@@ -115,6 +121,7 @@ def make_config(*, subject, n_classes, arch='base', seed, augmented=True,
         'arch': arch,
         'augmented': augmented,
         'band': list(band),
+        'align': align,
         'freeze': freeze,
         'budget': budget,
         'seed': seed,
@@ -137,10 +144,13 @@ def save_run(config, metrics, predictions):
         if k not in predictions:
             raise ValueError(f'predictions precisa conter {k!r}')
 
+    # align via .get(): os runs da fase A01 foram gravados antes do campo existir,
+    # e ausente significa exatamente None (nenhum alinhamento). Os outros campos
+    # continuam com [k] de proposito -- se faltar um deles, e bug, e tem que gritar.
     p = run_path(**{k: config[k] for k in
                     ('subject', 'n_classes', 'arch', 'seed', 'augmented',
                      'source_subject', 'freeze', 'budget', 'experiment')},
-                 band=tuple(config['band']))
+                 band=tuple(config['band']), align=config.get('align'))
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(
         {'config': config, 'metrics': metrics, 'predictions': predictions},
