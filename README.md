@@ -22,8 +22,9 @@ two files recorded on **different days**: `A01T.gdf` (training session) and `A01
 split, and data augmentation is therefore structurally incapable of leaking across it.
 
 These are **not cross-subject** results, and **not** an average over the nine subjects.
-Subject A01 is one of the stronger performers in this dataset, so these numbers should
-not be compared directly against the nine-subject means usually quoted in the literature.
+This section originally stated that A01 is one of the stronger performers in the dataset;
+having now run the other eight, that is not supported -- A01 is a median subject. See the
+nine-subject replication below.
 
 | | Trials |
 |---|---|
@@ -320,6 +321,75 @@ concentrating on the electrodes the physiology would nominate.
 
 Full per-seed values are in `results_spatial_patterns.json`.
 
+## Within-subject replication across the nine subjects
+
+Everything above this point is subject A01. This section trains the identical pipeline —
+same architecture, same augmentation, same batch size, same patience, same 4–40 Hz band —
+separately on each of the nine subjects, `A0xT` to `A0xE`. Only the subject changes. It is
+replication, not transfer, and it is the denominator every transfer number below is divided
+by.
+
+Seeds are reported as individual values rather than mean ± SD. With two or three runs the
+sample SD is the gap between them rescaled by a constant and carries no information the
+values do not, while the ± notation invites a distributional reading that this many runs
+cannot support.
+
+<!-- AUTOGEN:within-table -->
+| Subject | 2-class, per seed | 4-class, per seed |
+|---|---|---|
+| A01 *(dev)* | 0.826 [0.576–0.924] | 0.739 [0.708–0.785] |
+| A02 | 0.514, 0.674 | 0.403, 0.417 |
+| A03 | 0.965, 0.965 | 0.882, 0.906 |
+| A04 | 0.847, 0.729 | 0.559, 0.552 |
+| A05 | 0.708, 0.535 | 0.347, 0.347 |
+| A06 | 0.736, 0.688 | 0.396, 0.257 |
+| A07 | 0.778, 0.674 | 0.747, 0.719 |
+| A08 | 0.979, 0.972 | 0.760, 0.809 |
+| A09 | 0.910, 0.910 | 0.785 |
+| **mean of the nine** | **0.791** | **0.619** |
+
+Seeds per cell: 2-class n = 2–5; 4-class n = 1–5 (A01 carries five from the single-subject phase). Values are individual runs.
+<!-- /AUTOGEN:within-table -->
+
+Two things follow, and the first corrects a claim made earlier in this README.
+
+**A01 is a median subject on this dataset, not a strong one.** The protocol section states
+that A01 "is one of the stronger performers", which was asserted without ever running the
+other eight. It is not supported: A03, A08 and A09 beat A01 in both tasks, and A04 and A07
+beat it in one. A01 sits in the middle of the nine. This does not change any A01 number, but
+it removes the reason given for not comparing them against nine-subject means.
+
+**The training instability is a property of the pipeline, not of A01.** The Limitations
+section documents the across-seed collapse as an A01 finding with an identified cause — early
+stopping on a validation split of 28 trials (2-class) or 56 (4-class). Running the other
+eight shows the same failure, landing on different subjects at different seeds:
+
+| | collapsed run | healthy run |
+|---|---|---|
+| A02, 2-class | 0.514, val 0.571, stopped at 32 epochs | 0.674, val 0.750, 61 epochs |
+| A05, 2-class | 0.535, val 0.679, stopped at 26 epochs | 0.708, val 0.714, 82 epochs |
+| A06, 4-class | 0.257, val 0.232 (below chance), 29 epochs | 0.396, val 0.411, 60 epochs |
+
+The signature is consistent: a collapsed run stops early, and its validation accuracy is as
+poor as its test accuracy, so the failure is visible without touching the test set. Gaps
+between two seeds of the same subject reach 14 to 17 accuracy points.
+
+This matters beyond replication. The one effect the Squeeze-and-Excitation block was shown
+to have is variance reduction — 33.7x and 11.4x on A01, Pitman–Morgan p = 0.016 and 0.030,
+on three degrees of freedom. Establishing that the variance it targets is a general property
+of the pipeline rather than a quirk of one subject is the precondition for testing that claim
+properly. The nine-subject SE arm is not run yet, and it needs five seeds per subject: a
+variance-ratio test on two seeds per cell has no power, because with two runs the "variance"
+is a single gap.
+
+One hypothesis is recorded here before the seeds that would test it are complete, so that it
+cannot be fitted afterwards: **across-seed dispersion is inversely related to a subject's mean
+accuracy.** The strong subjects are reproducible (A03 and A09 returned identical 2-class
+accuracy on two seeds; A08 differed by 0.7 points) and the weak ones are not. The 4-class arm
+already contradicts it in part — A05 returned identical accuracy on two seeds at 0.347, and
+A06 produced the widest gap at a similarly low accuracy — so the pattern is a question, not a
+result. Testable as a Spearman correlation over the nine subjects once five seeds exist.
+
 ## Cross-subject transfer: the zero-shot floor
 
 The five A01 models per task are applied, unchanged, to every subject's evaluation
@@ -383,6 +453,71 @@ eight subjects cannot distinguish that from validation selecting well in general
 
 The 4-class ensemble advantage found on A01 (McNemar p = 0.013) **does not replicate**
 across the eight unseen subjects. That is the result this phase existed to obtain.
+
+### Normalised by each subject's own ceiling
+
+Absolute transfer accuracy conflates two different things: how well the source model
+transports to a person, and how decodable that person is for any model at all. The table
+above says A03 and A08 are the subjects that transfer. They are also the two easiest subjects
+in the dataset -- their own within-subject models reach 0.965 and 0.976 in 2-class -- so most
+of what that reading measured was the subject, not the transport.
+
+Dividing by each subject's own within ceiling separates them. Two quantities are reported.
+The **ratio** is the zero-shot member mean over the within mean: single model against single
+model, since pitting a five-model vote against one model would inflate the numerator.
+**Retained above chance** is the share of the headroom that survives transfer,
+`(zero-shot - chance) / (within - chance)`, which is what a transfer method actually has left
+to recover.
+
+<!-- AUTOGEN:ratio-table -->
+| Target | Within ceiling | Zero-shot | Ratio | Retained above chance |
+|---|---|---|---|---|
+| **2-class** | | | | |
+| A01 *(dev, same person — not transfer)* | 0.826 | 0.826 | 1.00 | — |
+| A02 | 0.594 | 0.582 | 0.980 | 87.4% |
+| A03 | 0.965 | 0.757 | 0.784 | 55.2% |
+| A04 | 0.788 | 0.574 | 0.728 | 25.5% |
+| A05 | 0.622 | 0.487 | 0.784 | -10.3% |
+| A06 | 0.712 | 0.624 | 0.876 | 58.4% |
+| A07 | 0.726 | 0.567 | 0.781 | 29.5% |
+| A08 | 0.976 | 0.696 | 0.713 | 41.2% |
+| A09 | 0.910 | 0.543 | 0.597 | 10.5% |
+| **4-class** | | | | |
+| A01 *(dev, same person — not transfer)* | 0.739 | 0.739 | 1.00 | — |
+| A02 | 0.410 | 0.248 | 0.605 | -1.3% |
+| A03 | 0.894 | 0.515 | 0.576 | 41.2% |
+| A04 | 0.556 | 0.303 | 0.546 | 17.5% |
+| A05 | 0.347 | 0.258 | 0.744 | 8.6% |
+| A06 | 0.326 | 0.315 | 0.966 | 85.5% |
+| A07 | 0.733 | 0.308 | 0.421 | 12.1% |
+| A08 | 0.785 | 0.400 | 0.510 | 28.1% |
+| A09 | 0.785 | 0.308 | 0.392 | 10.8% |
+<!-- /AUTOGEN:ratio-table -->
+
+<!-- AUTOGEN:ratio-medians -->
+- **2-class:** median ratio **0.78** (range 0.60–0.98); median retained above chance **35.4%** (range -10.3% to 87.4%).
+- **4-class:** median ratio **0.56** (range 0.39–0.97); median retained above chance **14.8%** (range -1.3% to 85.5%).
+<!-- /AUTOGEN:ratio-medians -->
+
+A flagged row marks a subject whose own within accuracy is not itself above chance, where the
+denominator is noise and the percentage is not interpretable.
+
+This reverses part of the absolute reading. **A06 retains as much as A03 or more**, in both
+tasks, despite much lower absolute accuracy -- it is the better transfer target once its own
+ceiling is accounted for. And A05's 4-class failure is mostly its own ceiling (within 0.347
+against 0.25 chance), not transport; its 2-class failure is real, retaining a negative share.
+
+The sharpest cases are **A09 and A07 in 4-class**: within accuracy of 0.785 and 0.733, as good
+as A01, yet zero-shot leaves them near chance, retaining roughly a tenth of the headroom.
+These are highly decodable people that this source model simply does not reach, and they are
+where fine-tuning has the most room to act.
+
+**Stability caveat.** The retained-above-chance figure divides by `within - chance`, and that
+denominator is itself estimated from few seeds, so it is the least stable number here. Between
+one and two seeds the 4-class median moved from 14.5% to 14.8%, but the 2-class median moved
+from 24.0% to 35.4%. Treat the 4-class figure as settled and the 2-class one as provisional
+until five seeds are in. The plain ratio, whose denominator is the within mean rather than a
+difference, is correspondingly steadier.
 
 ### What this does not establish
 
