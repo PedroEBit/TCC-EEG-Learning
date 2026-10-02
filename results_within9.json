@@ -57,18 +57,20 @@
       },
       "A02": {
         "subject": 2,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.6180555555555555,
-        "accuracy_std": 0.09027777777777782,
+        "accuracy_mean": 0.6458333333333333,
+        "accuracy_std": 0.0782599143721156,
         "accuracy_min": 0.5138888888888888,
         "accuracy_median": 0.6666666666666666,
-        "accuracy_max": 0.6736111111111112,
-        "kappa_mean": 0.23611111111111113,
+        "accuracy_max": 0.7222222222222222,
+        "kappa_mean": 0.29166666666666663,
         "per_seed": [
           {
             "seed": 0,
@@ -90,23 +92,39 @@
             "kappa": 0.33333333333333337,
             "val_acc_restored": 0.75,
             "epochs_run": 56
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.7222222222222222,
+            "kappa": 0.4444444444444444,
+            "val_acc_restored": 0.75,
+            "epochs_run": 72
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.6527777777777778,
+            "kappa": 0.3055555555555556,
+            "val_acc_restored": 0.6785714285714286,
+            "epochs_run": 52
           }
         ]
       },
       "A03": {
         "subject": 3,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.9675925925925926,
-        "accuracy_std": 0.004009376869372387,
-        "accuracy_min": 0.9652777777777778,
+        "accuracy_mean": 0.9625,
+        "accuracy_std": 0.010531771450071609,
+        "accuracy_min": 0.9444444444444444,
         "accuracy_median": 0.9652777777777778,
         "accuracy_max": 0.9722222222222222,
-        "kappa_mean": 0.9351851851851851,
+        "kappa_mean": 0.925,
         "per_seed": [
           {
             "seed": 0,
@@ -128,23 +146,39 @@
             "kappa": 0.9444444444444444,
             "val_acc_restored": 1.0,
             "epochs_run": 102
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.9444444444444444,
+            "kappa": 0.8888888888888888,
+            "val_acc_restored": 1.0,
+            "epochs_run": 101
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.9652777777777778,
+            "kappa": 0.9305555555555556,
+            "val_acc_restored": 1.0,
+            "epochs_run": 129
           }
         ]
       },
       "A04": {
         "subject": 4,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.7916666666666666,
-        "accuracy_std": 0.05933335934248287,
+        "accuracy_mean": 0.7930555555555555,
+        "accuracy_std": 0.042639115091690986,
         "accuracy_min": 0.7291666666666666,
         "accuracy_median": 0.7986111111111112,
         "accuracy_max": 0.8472222222222222,
-        "kappa_mean": 0.5833333333333334,
+        "kappa_mean": 0.586111111111111,
         "per_seed": [
           {
             "seed": 0,
@@ -166,23 +200,39 @@
             "kappa": 0.5972222222222222,
             "val_acc_restored": 0.8571428571428571,
             "epochs_run": 90
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.8055555555555556,
+            "kappa": 0.6111111111111112,
+            "val_acc_restored": 0.9642857142857143,
+            "epochs_run": 170
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.7847222222222222,
+            "kappa": 0.5694444444444444,
+            "val_acc_restored": 0.8928571428571429,
+            "epochs_run": 84
           }
         ]
       },
       "A05": {
         "subject": 5,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.6180555555555556,
-        "accuracy_std": 0.08701363948709494,
+        "accuracy_mean": 0.638888888888889,
+        "accuracy_std": 0.07717399573226691,
         "accuracy_min": 0.5347222222222222,
-        "accuracy_median": 0.6111111111111112,
-        "accuracy_max": 0.7083333333333334,
-        "kappa_mean": 0.23611111111111108,
+        "accuracy_median": 0.6180555555555556,
+        "accuracy_max": 0.7222222222222222,
+        "kappa_mean": 0.2777777777777778,
         "per_seed": [
           {
             "seed": 0,
@@ -204,23 +254,39 @@
             "kappa": 0.2222222222222222,
             "val_acc_restored": 0.6785714285714286,
             "epochs_run": 39
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.7222222222222222,
+            "kappa": 0.4444444444444444,
+            "val_acc_restored": 0.5714285714285714,
+            "epochs_run": 50
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.6180555555555556,
+            "kappa": 0.23611111111111116,
+            "val_acc_restored": 0.6785714285714286,
+            "epochs_run": 49
           }
         ]
       },
       "A06": {
         "subject": 6,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.6828703703703703,
-        "accuracy_std": 0.05570004359035172,
+        "accuracy_mean": 0.6875,
+        "accuracy_std": 0.04108388738263624,
         "accuracy_min": 0.625,
         "accuracy_median": 0.6875,
         "accuracy_max": 0.7361111111111112,
-        "kappa_mean": 0.36574074074074076,
+        "kappa_mean": 0.375,
         "per_seed": [
           {
             "seed": 0,
@@ -242,23 +308,39 @@
             "kappa": 0.25,
             "val_acc_restored": 0.75,
             "epochs_run": 45
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.7083333333333334,
+            "kappa": 0.41666666666666663,
+            "val_acc_restored": 0.8928571428571429,
+            "epochs_run": 158
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.6805555555555556,
+            "kappa": 0.36111111111111116,
+            "val_acc_restored": 0.7857142857142857,
+            "epochs_run": 56
           }
         ]
       },
       "A07": {
         "subject": 7,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.7453703703703703,
-        "accuracy_std": 0.062242266943281235,
+        "accuracy_mean": 0.7666666666666667,
+        "accuracy_std": 0.05633138830742565,
         "accuracy_min": 0.6736111111111112,
         "accuracy_median": 0.7777777777777778,
-        "accuracy_max": 0.7847222222222222,
-        "kappa_mean": 0.49074074074074076,
+        "accuracy_max": 0.8263888888888888,
+        "kappa_mean": 0.5333333333333334,
         "per_seed": [
           {
             "seed": 0,
@@ -280,23 +362,39 @@
             "kappa": 0.5694444444444444,
             "val_acc_restored": 0.8214285714285714,
             "epochs_run": 105
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.7708333333333334,
+            "kappa": 0.5416666666666667,
+            "val_acc_restored": 0.8928571428571429,
+            "epochs_run": 98
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.8263888888888888,
+            "kappa": 0.6527777777777778,
+            "val_acc_restored": 0.8214285714285714,
+            "epochs_run": 62
           }
         ]
       },
       "A08": {
         "subject": 8,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.9745370370370371,
-        "accuracy_std": 0.004009376869372387,
-        "accuracy_min": 0.9722222222222222,
+        "accuracy_mean": 0.9722222222222221,
+        "accuracy_std": 0.008505172717997115,
+        "accuracy_min": 0.9583333333333334,
         "accuracy_median": 0.9722222222222222,
         "accuracy_max": 0.9791666666666666,
-        "kappa_mean": 0.9490740740740741,
+        "kappa_mean": 0.9444444444444444,
         "per_seed": [
           {
             "seed": 0,
@@ -318,23 +416,39 @@
             "kappa": 0.9444444444444444,
             "val_acc_restored": 1.0,
             "epochs_run": 84
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.9791666666666666,
+            "kappa": 0.9583333333333334,
+            "val_acc_restored": 1.0,
+            "epochs_run": 68
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.9583333333333334,
+            "kappa": 0.9166666666666666,
+            "val_acc_restored": 1.0,
+            "epochs_run": 54
           }
         ]
       },
       "A09": {
         "subject": 9,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.9143518518518517,
-        "accuracy_std": 0.008018753738744838,
+        "accuracy_mean": 0.9180555555555555,
+        "accuracy_std": 0.009054447785003703,
         "accuracy_min": 0.9097222222222222,
-        "accuracy_median": 0.9097222222222222,
-        "accuracy_max": 0.9236111111111112,
-        "kappa_mean": 0.8287037037037037,
+        "accuracy_median": 0.9166666666666666,
+        "accuracy_max": 0.9305555555555556,
+        "kappa_mean": 0.836111111111111,
         "per_seed": [
           {
             "seed": 0,
@@ -356,17 +470,31 @@
             "kappa": 0.8472222222222222,
             "val_acc_restored": 1.0,
             "epochs_run": 70
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.9166666666666666,
+            "kappa": 0.8333333333333334,
+            "val_acc_restored": 0.9642857142857143,
+            "epochs_run": 73
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.9305555555555556,
+            "kappa": 0.8611111111111112,
+            "val_acc_restored": 1.0,
+            "epochs_run": 90
           }
         ]
       }
     },
     "across_subjects": {
       "n_subjects": 9,
-      "mean_of_means": 0.7932098765432098,
-      "median_of_means": 0.7916666666666666,
-      "min": 0.6180555555555555,
-      "max": 0.9745370370370371,
-      "std_across_subjects": 0.13914424827439462
+      "mean_of_means": 0.8012345679012346,
+      "median_of_means": 0.7930555555555555,
+      "min": 0.638888888888889,
+      "max": 0.9722222222222221,
+      "std_across_subjects": 0.12953100580299182
     }
   },
   "4class": {
@@ -427,18 +555,20 @@
       },
       "A02": {
         "subject": 2,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.4039351851851852,
-        "accuracy_std": 0.012194043695431422,
+        "accuracy_mean": 0.4208333333333333,
+        "accuracy_std": 0.03939098000247715,
         "accuracy_min": 0.3923611111111111,
         "accuracy_median": 0.4027777777777778,
-        "accuracy_max": 0.4166666666666667,
-        "kappa_mean": 0.2052469135802469,
+        "accuracy_max": 0.4895833333333333,
+        "kappa_mean": 0.22777777777777777,
         "per_seed": [
           {
             "seed": 0,
@@ -460,23 +590,39 @@
             "kappa": 0.18981481481481477,
             "val_acc_restored": 0.625,
             "epochs_run": 79
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.4895833333333333,
+            "kappa": 0.3194444444444444,
+            "val_acc_restored": 0.5892857142857143,
+            "epochs_run": 88
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.4027777777777778,
+            "kappa": 0.20370370370370372,
+            "val_acc_restored": 0.625,
+            "epochs_run": 60
           }
         ]
       },
       "A03": {
         "subject": 3,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.8981481481481483,
-        "accuracy_std": 0.014032819042803419,
+        "accuracy_mean": 0.8951388888888889,
+        "accuracy_std": 0.010814174654442676,
         "accuracy_min": 0.8819444444444444,
-        "accuracy_median": 0.90625,
+        "accuracy_median": 0.8923611111111112,
         "accuracy_max": 0.90625,
-        "kappa_mean": 0.8641975308641975,
+        "kappa_mean": 0.8601851851851852,
         "per_seed": [
           {
             "seed": 0,
@@ -498,23 +644,39 @@
             "kappa": 0.875,
             "val_acc_restored": 0.9285714285714286,
             "epochs_run": 102
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.8923611111111112,
+            "kappa": 0.8564814814814815,
+            "val_acc_restored": 0.9285714285714286,
+            "epochs_run": 150
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.8888888888888888,
+            "kappa": 0.8518518518518519,
+            "val_acc_restored": 0.9464285714285714,
+            "epochs_run": 138
           }
         ]
       },
       "A04": {
         "subject": 4,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.5613425925925926,
-        "accuracy_std": 0.010607814108694037,
-        "accuracy_min": 0.5520833333333334,
+        "accuracy_mean": 0.5604166666666666,
+        "accuracy_std": 0.014442107182698194,
+        "accuracy_min": 0.5416666666666666,
         "accuracy_median": 0.5590277777777778,
-        "accuracy_max": 0.5729166666666666,
-        "kappa_mean": 0.41512345679012347,
+        "accuracy_max": 0.5763888888888888,
+        "kappa_mean": 0.4138888888888889,
         "per_seed": [
           {
             "seed": 0,
@@ -536,23 +698,39 @@
             "kappa": 0.4305555555555556,
             "val_acc_restored": 0.5357142857142857,
             "epochs_run": 88
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.5416666666666666,
+            "kappa": 0.38888888888888884,
+            "val_acc_restored": 0.5178571428571429,
+            "epochs_run": 68
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.5763888888888888,
+            "kappa": 0.43518518518518523,
+            "val_acc_restored": 0.6785714285714286,
+            "epochs_run": 128
           }
         ]
       },
       "A05": {
         "subject": 5,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.33449074074074076,
-        "accuracy_std": 0.022051572781548193,
+        "accuracy_mean": 0.3722222222222223,
+        "accuracy_std": 0.055631458565264726,
         "accuracy_min": 0.3090277777777778,
         "accuracy_median": 0.3472222222222222,
-        "accuracy_max": 0.3472222222222222,
-        "kappa_mean": 0.11265432098765434,
+        "accuracy_max": 0.4479166666666667,
+        "kappa_mean": 0.16296296296296295,
         "per_seed": [
           {
             "seed": 0,
@@ -574,23 +752,39 @@
             "kappa": 0.07870370370370372,
             "val_acc_restored": 0.25,
             "epochs_run": 36
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.4097222222222222,
+            "kappa": 0.2129629629629629,
+            "val_acc_restored": 0.32142857142857145,
+            "epochs_run": 54
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.4479166666666667,
+            "kappa": 0.26388888888888884,
+            "val_acc_restored": 0.39285714285714285,
+            "epochs_run": 51
           }
         ]
       },
       "A06": {
         "subject": 6,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.3796296296296296,
-        "accuracy_std": 0.11543942259066374,
+        "accuracy_mean": 0.35347222222222224,
+        "accuracy_std": 0.08935155200487013,
         "accuracy_min": 0.2569444444444444,
-        "accuracy_median": 0.3958333333333333,
+        "accuracy_median": 0.3229166666666667,
         "accuracy_max": 0.4861111111111111,
-        "kappa_mean": 0.1728395061728395,
+        "kappa_mean": 0.13796296296296295,
         "per_seed": [
           {
             "seed": 0,
@@ -612,23 +806,39 @@
             "kappa": 0.31481481481481477,
             "val_acc_restored": 0.4642857142857143,
             "epochs_run": 97
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.3229166666666667,
+            "kappa": 0.09722222222222221,
+            "val_acc_restored": 0.25,
+            "epochs_run": 32
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.3055555555555556,
+            "kappa": 0.07407407407407407,
+            "val_acc_restored": 0.2857142857142857,
+            "epochs_run": 31
           }
         ]
       },
       "A07": {
         "subject": 7,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.7569444444444443,
-        "accuracy_std": 0.04433036574584621,
+        "accuracy_mean": 0.7555555555555555,
+        "accuracy_std": 0.031403941818319486,
         "accuracy_min": 0.71875,
-        "accuracy_median": 0.7465277777777778,
+        "accuracy_median": 0.7534722222222222,
         "accuracy_max": 0.8055555555555556,
-        "kappa_mean": 0.6759259259259259,
+        "kappa_mean": 0.674074074074074,
         "per_seed": [
           {
             "seed": 0,
@@ -650,23 +860,39 @@
             "kappa": 0.7407407407407407,
             "val_acc_restored": 0.8392857142857143,
             "epochs_run": 137
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.7534722222222222,
+            "kappa": 0.6712962962962963,
+            "val_acc_restored": 0.8392857142857143,
+            "epochs_run": 150
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.7534722222222222,
+            "kappa": 0.6712962962962963,
+            "val_acc_restored": 0.8035714285714286,
+            "epochs_run": 123
           }
         ]
       },
       "A08": {
         "subject": 8,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.7951388888888888,
-        "accuracy_std": 0.030270131552365808,
+        "accuracy_mean": 0.79375,
+        "accuracy_std": 0.021628349308885346,
         "accuracy_min": 0.7604166666666666,
-        "accuracy_median": 0.8090277777777778,
+        "accuracy_median": 0.7951388888888888,
         "accuracy_max": 0.8159722222222222,
-        "kappa_mean": 0.726851851851852,
+        "kappa_mean": 0.725,
         "per_seed": [
           {
             "seed": 0,
@@ -688,23 +914,39 @@
             "kappa": 0.7546296296296297,
             "val_acc_restored": 0.9285714285714286,
             "epochs_run": 121
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.7881944444444444,
+            "kappa": 0.7175925925925926,
+            "val_acc_restored": 0.8035714285714286,
+            "epochs_run": 103
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.7951388888888888,
+            "kappa": 0.7268518518518519,
+            "val_acc_restored": 0.875,
+            "epochs_run": 147
           }
         ]
       },
       "A09": {
         "subject": 9,
-        "n_seeds": 3,
+        "n_seeds": 5,
         "seeds": [
           0,
           1,
-          2
+          2,
+          3,
+          4
         ],
-        "accuracy_mean": 0.789351851851852,
-        "accuracy_std": 0.008018753738744838,
-        "accuracy_min": 0.7847222222222222,
+        "accuracy_mean": 0.7833333333333334,
+        "accuracy_std": 0.011143615649917508,
+        "accuracy_min": 0.7673611111111112,
         "accuracy_median": 0.7847222222222222,
         "accuracy_max": 0.7986111111111112,
-        "kappa_mean": 0.7191358024691358,
+        "kappa_mean": 0.711111111111111,
         "per_seed": [
           {
             "seed": 0,
@@ -726,17 +968,31 @@
             "kappa": 0.712962962962963,
             "val_acc_restored": 0.9464285714285714,
             "epochs_run": 150
+          },
+          {
+            "seed": 3,
+            "accuracy": 0.7673611111111112,
+            "kappa": 0.6898148148148149,
+            "val_acc_restored": 0.8571428571428571,
+            "epochs_run": 113
+          },
+          {
+            "seed": 4,
+            "accuracy": 0.78125,
+            "kappa": 0.7083333333333333,
+            "val_acc_restored": 0.8571428571428571,
+            "epochs_run": 98
           }
         ]
       }
     },
     "across_subjects": {
       "n_subjects": 9,
-      "mean_of_means": 0.6286522633744857,
+      "mean_of_means": 0.6304012345679012,
       "median_of_means": 0.7388888888888888,
-      "min": 0.33449074074074076,
-      "max": 0.8981481481481483,
-      "std_across_subjects": 0.2116461711136443
+      "min": 0.35347222222222224,
+      "max": 0.8951388888888889,
+      "std_across_subjects": 0.20608034600764577
     }
   }
 }

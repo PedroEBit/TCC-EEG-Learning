@@ -176,7 +176,11 @@ Feito em 30/09/2026. Repositório limpo (só material do paper), tag
   4-class o ganho e negativo. O achado do A01 (McNemar p=0.013 no 4c) NAO replicou.
 
 **Falta:**
-- Terminar as 5 sementes within nos 9 (roda sozinho, `python within9.py`).
+- ~~Terminar as 5 sementes within nos 9~~ **FEITO 02/10/2026 19:49**, 90 runs.
+  Hipotese pre-registrada confirmada nas duas tarefas: Spearman(acuracia, dp entre sementes)
+  rho=-0.667 p=0.050 (2c) e rho=-0.867 p=0.0025 (4c). Com 3 sementes o 4-class dava
+  p=0.637 -- o dp por sujeito era ruido demais. E resultado sobre n tanto quanto sobre
+  dispersao.
 - **Braco SE nos 9, com n=5.** NAO fazer com n=2: o achado do SE e sobre variancia, e com
   duas sementes "variancia" e o gap dividido por raiz(2). Pre-requisito: `se_ablation.py`
   tem `SUBJECT_ID` fixo em 1 e nao salva `proba` (secao 7).

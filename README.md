@@ -329,26 +329,25 @@ separately on each of the nine subjects, `A0xT` to `A0xE`. Only the subject chan
 replication, not transfer, and it is the denominator every transfer number below is divided
 by.
 
-Seeds are reported as individual values rather than mean ± SD. With two or three runs the
-sample SD is the gap between them rescaled by a constant and carries no information the
-values do not, while the ± notation invites a distributional reading that this many runs
-cannot support.
+All nine subjects now carry five seeds per task, so mean and SD are reported. While the run
+was in progress these tables reported individual values instead: below five seeds the sample
+SD carries little, and at two runs it is the gap rescaled by a constant.
 
 <!-- AUTOGEN:within-table -->
 | Subject | 2-class, per seed | 4-class, per seed |
 |---|---|---|
 | A01 *(dev)* | 0.826 [0.576–0.924] | 0.739 [0.708–0.785] |
-| A02 | 0.514, 0.674, 0.667 | 0.403, 0.417, 0.392 |
-| A03 | 0.965, 0.965, 0.972 | 0.882, 0.906, 0.906 |
-| A04 | 0.847, 0.729, 0.799 | 0.559, 0.552, 0.573 |
-| A05 | 0.708, 0.535, 0.611 | 0.347, 0.347, 0.309 |
-| A06 | 0.736, 0.688, 0.625 | 0.396, 0.257, 0.486 |
-| A07 | 0.778, 0.674, 0.785 | 0.747, 0.719, 0.806 |
-| A08 | 0.979, 0.972, 0.972 | 0.760, 0.809, 0.816 |
-| A09 | 0.910, 0.910, 0.924 | 0.785, 0.799, 0.785 |
-| **mean of the nine** | **0.793** | **0.629** |
+| A02 | 0.646 [0.514–0.722] | 0.421 [0.392–0.490] |
+| A03 | 0.963 [0.944–0.972] | 0.895 [0.882–0.906] |
+| A04 | 0.793 [0.729–0.847] | 0.560 [0.542–0.576] |
+| A05 | 0.639 [0.535–0.722] | 0.372 [0.309–0.448] |
+| A06 | 0.688 [0.625–0.736] | 0.353 [0.257–0.486] |
+| A07 | 0.767 [0.674–0.826] | 0.756 [0.719–0.806] |
+| A08 | 0.972 [0.958–0.979] | 0.794 [0.760–0.816] |
+| A09 | 0.918 [0.910–0.931] | 0.783 [0.767–0.799] |
+| **mean of the nine** | **0.801** | **0.630** |
 
-Seeds per cell: 2-class n = 3–5; 4-class n = 3–5 (A01 carries five from the single-subject phase). Values are individual runs.
+Seeds per cell: 2-class n = 5; 4-class n = 5 (A01 carries five from the single-subject phase). Values are individual runs.
 <!-- /AUTOGEN:within-table -->
 
 Two things follow, and the first corrects a claim made earlier in this README.
@@ -364,11 +363,11 @@ section documents the across-seed collapse as an A01 finding with an identified 
 stopping on a validation split of 28 trials (2-class) or 56 (4-class). Running the other
 eight shows the same failure, landing on different subjects at different seeds:
 
-| | collapsed run | other seeds |
+| | collapsed run | the other four seeds |
 |---|---|---|
-| A02, 2-class | 0.514, val 0.571, stopped at 32 epochs | 0.667, 0.674 |
-| A05, 2-class | 0.535, val 0.679, stopped at 26 epochs | 0.611, 0.708 |
-| A06, 4-class | 0.257, val 0.232 (below chance), 29 epochs | 0.396, 0.486 |
+| A02, 2-class | 0.514, val 0.571, stopped at 32 epochs | 0.653, 0.667, 0.674, 0.722 |
+| A05, 2-class | 0.535, val 0.679, stopped at 26 epochs | 0.611, 0.618, 0.708, 0.722 |
+| A06, 4-class | 0.257, val 0.232 (below chance), 29 epochs | 0.306, 0.323, 0.396, 0.486 |
 
 The signature is consistent: a collapsed run stops early, and its validation accuracy is as
 poor as its test accuracy, so the failure is visible without touching the test set. Gaps
@@ -384,21 +383,27 @@ is a single gap.
 
 One hypothesis was recorded at two seeds, before the data that would test it existed, so that
 it could not be fitted afterwards: **across-seed dispersion is inversely related to a
-subject's mean accuracy.** At three seeds it holds in one task and not the other.
+subject's mean accuracy.** At five seeds it holds in both tasks.
 
-| | Spearman rho | p |
-|---|---|---|
-| 2-class | **-0.695** | **0.038** |
-| 4-class | -0.183 | 0.637 |
+| | Spearman rho | p | same test at three seeds |
+|---|---|---|---|
+| 2-class | -0.667 | 0.050 | -0.695, p = 0.038 |
+| 4-class | **-0.867** | **0.0025** | -0.183, p = 0.637 |
 
-In 2-class the strong subjects are reproducible (A03, A08 and A09 vary by 0.4 to 0.8
-accuracy points across three seeds) and the weak ones are not (A02 and A05 both span roughly
-17 points). In 4-class the relationship is absent: A06 produces the widest spread of any cell
-at a low mean accuracy, while A05 is both weak and comparatively consistent.
+The 4-class arm is the instructive one. At three seeds the correlation was absent and the
+honest reading was that the hypothesis failed there. It had not: at three seeds the
+per-subject SD is itself too noisy to correlate with anything, and two more seeds moved it
+from rho = -0.183 to rho = -0.867. The test of the hypothesis is also a demonstration of why
+this project states seed counts everywhere.
 
-Two caveats. The correlation rests on nine points with dispersion estimated from three seeds
-each (five for A01), and p = 0.038 is marginal and uncorrected. It is reported because it was
-pre-registered, not because it is established.
+The pattern is that strong subjects are reproducible and weak ones are not. A03, A08 and A09
+vary by 1.1 accuracy points or less across five 2-class seeds, while A02 and A05 span 21 and
+19 points. A06 produces the widest 4-class spread of any cell, 23 points, at the lowest mean
+accuracy of the nine.
+
+The caveats stand: nine points, and the 2-class p = 0.050 sits exactly on the conventional
+threshold and is uncorrected. It is reported because it was pre-registered, not because one
+marginal p settles anything.
 
 ## Cross-subject transfer: the zero-shot floor
 
@@ -469,7 +474,7 @@ across the eight unseen subjects. That is the result this phase existed to obtai
 Absolute transfer accuracy conflates two different things: how well the source model
 transports to a person, and how decodable that person is for any model at all. The table
 above says A03 and A08 are the subjects that transfer. They are also the two easiest subjects
-in the dataset -- their own within-subject models reach 0.968 and 0.975 in 2-class -- so most
+in the dataset -- their own within-subject models reach 0.963 and 0.972 in 2-class -- so most
 of what that reading measured was the subject, not the transport.
 
 Dividing by each subject's own within ceiling separates them. Two quantities are reported.
@@ -484,53 +489,53 @@ to recover.
 |---|---|---|---|---|
 | **2-class** | | | | |
 | A01 *(dev, same person — not transfer)* | 0.826 | 0.826 | 1.00 | — |
-| A02 | 0.618 | 0.582 | 0.942 | 69.4% |
-| A03 | 0.968 | 0.757 | 0.782 | 55.0% |
-| A04 | 0.792 | 0.574 | 0.725 | 25.2% |
-| A05 | 0.618 | 0.487 | 0.789 | -10.6% |
-| A06 | 0.683 | 0.624 | 0.913 | 67.6% |
-| A07 | 0.745 | 0.567 | 0.760 | 27.2% |
-| A08 | 0.975 | 0.696 | 0.714 | 41.3% |
-| A09 | 0.914 | 0.543 | 0.594 | 10.4% |
+| A02 | 0.646 | 0.582 | 0.901 | 56.2% |
+| A03 | 0.963 | 0.757 | 0.786 | 55.6% |
+| A04 | 0.793 | 0.574 | 0.723 | 25.1% |
+| A05 | 0.639 | 0.487 | 0.763 | -9.0% |
+| A06 | 0.688 | 0.624 | 0.907 | 65.9% |
+| A07 | 0.767 | 0.567 | 0.739 | 25.0% |
+| A08 | 0.972 | 0.696 | 0.716 | 41.5% |
+| A09 | 0.918 | 0.543 | 0.592 | 10.3% |
 | **4-class** | | | | |
 | A01 *(dev, same person — not transfer)* | 0.739 | 0.739 | 1.00 | — |
-| A02 | 0.404 | 0.248 | 0.614 | -1.4% |
-| A03 | 0.898 | 0.515 | 0.574 | 40.9% |
-| A04 | 0.561 | 0.303 | 0.541 | 17.2% |
-| A05 | 0.334 | 0.258 | 0.772 | 9.9% |
-| A06 | 0.380 | 0.315 | 0.830 | 50.4% |
-| A07 | 0.757 | 0.308 | 0.407 | 11.5% |
-| A08 | 0.795 | 0.400 | 0.503 | 27.5% |
-| A09 | 0.789 | 0.308 | 0.390 | 10.7% |
+| A02 | 0.421 | 0.248 | 0.589 | -1.2% |
+| A03 | 0.895 | 0.515 | 0.576 | 41.1% |
+| A04 | 0.560 | 0.303 | 0.542 | 17.2% |
+| A05 | 0.372 | 0.258 | 0.694 | 6.8% |
+| A06 | 0.353 | 0.315 | 0.892 | 63.1% |
+| A07 | 0.756 | 0.308 | 0.408 | 11.5% |
+| A08 | 0.794 | 0.400 | 0.504 | 27.6% |
+| A09 | 0.783 | 0.308 | 0.393 | 10.8% |
 <!-- /AUTOGEN:ratio-table -->
 
 <!-- AUTOGEN:ratio-medians -->
-- **2-class:** median ratio **0.77** (range 0.59–0.94); median retained above chance **34.2%** (range -10.6% to 69.4%).
-- **4-class:** median ratio **0.56** (range 0.39–0.83); median retained above chance **14.3%** (range -1.4% to 50.4%).
+- **2-class:** median ratio **0.75** (range 0.59–0.91); median retained above chance **33.3%** (range -9.0% to 65.9%).
+- **4-class:** median ratio **0.56** (range 0.39–0.89); median retained above chance **14.4%** (range -1.2% to 63.1%).
 <!-- /AUTOGEN:ratio-medians -->
 
 A flagged row marks a subject whose own within accuracy is not itself above chance, where the
 denominator is noise and the percentage is not interpretable.
 
-This reverses part of the absolute reading. **A06 retains more headroom than A03 in both
-tasks** -- 67.6% against 55.0% in 2-class and 50.4% against 40.9% in 4-class -- despite far
-lower absolute accuracy. Once each subject's own ceiling is accounted for, A06 and A02 are the
-best 2-class transfer targets, not the two subjects the absolute table nominated. And A05's
-4-class deficit is mostly its own ceiling (within 0.335 against 0.25 chance), not transport;
-its 2-class failure is real, retaining a negative share.
+This reverses the absolute reading. **A06 is the best transfer target in both tasks**,
+retaining 65.9% of its headroom in 2-class and 63.1% in 4-class against A03's 55.6% and 41.1%,
+despite lower absolute accuracy in every cell. The two subjects the absolute table nominated
+as the ones that transfer are not the ones that transfer best. A05's 4-class deficit is
+largely its own ceiling (within 0.372 against 0.25 chance), not transport; its 2-class failure
+is real, retaining a negative share.
 
-The sharpest cases are **A09 and A07 in 4-class**: within accuracy of 0.789 and 0.757, as good
-as A01 or better, yet zero-shot leaves them near chance, retaining 10.7% and 11.5% of the
+The sharpest cases are **A09 and A07 in 4-class**: within accuracy of 0.783 and 0.756, as good
+as A01 or better, yet zero-shot leaves them near chance, retaining 10.8% and 11.5% of the
 headroom. These are highly decodable people that this source model does not reach, and they
 are where fine-tuning has the most room to act.
 
 **Stability caveat.** The retained-above-chance figure divides by `within - chance`, and that
-denominator is itself estimated from few seeds, so it is the least stable number here. Across
-one, two and three seeds the 4-class median held at 14.5%, 14.8% and 14.3%, while the 2-class
-median moved 24.0%, 35.4%, 34.2% -- unstable between the first and second seed, settled
-between the second and third. The plain ratio, whose denominator is the within mean rather
-than a difference, was steadier throughout (2-class 0.720, 0.783, 0.771; 4-class 0.564, 0.561,
-0.557). Both are still measured against a within ceiling of three seeds, not five.
+denominator is itself estimated from the seeds, so it is the least stable number here. Across
+one to five seeds the 4-class median held at 14.5%, 14.8%, 14.3%, 14.4%, while the 2-class
+median moved 24.0%, 35.4%, 34.2%, 33.3% -- unstable between the first and second seed,
+settled from the third on. The plain ratio, whose denominator is the within mean rather than
+a difference, was steadier throughout (2-class 0.720, 0.783, 0.771, 0.751; 4-class 0.564,
+0.561, 0.557, 0.559). Both are now measured against a five-seed ceiling.
 
 ### What this does not establish
 
@@ -652,9 +657,9 @@ depthwise convolution requires.
   correction is applied here; a clean estimate needs a session, or a subject, that has
   never been evaluated.
 
-- **Every within-subject number above is subject A01.** The nine-subject within-subject
-  replication is in progress, not finished, and nothing in the results sections above has
-  been shown to hold for anyone but A01. The cross-subject section is the one part measured
+- **The detailed results sections above are subject A01.** The nine-subject within-subject
+  replication is complete at five seeds and has its own section, but the SE ablation, the
+  ensemble variants and the spatial-pattern analysis were not repeated on the other eight. The cross-subject section is the one part measured
   on all nine; it establishes a zero-shot floor, not transferability in general, because it
   has a single source subject.
 - The cross-subject results use one source subject and no domain alignment beyond the
