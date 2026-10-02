@@ -151,7 +151,42 @@ confiabilidade, não acurácia.
 Feito em 30/09/2026. Repositório limpo (só material do paper), tag
 `v1-single-subject`.
 
-### Fase 2 — Os 9 sujeitos (interpessoal) ← **ESTAMOS AQUI**
+### Fase 2 — Os 9 sujeitos (interpessoal) ← **PARCIAL, 02/10/2026**
+
+**Feito:**
+- **Split declarado no README antes de usar:** dev = A01, teste = A02..A09. A01 ja estava
+  queimado, entao nomea-lo dev nao custa nada e deixa 8 sujeitos limpos.
+- **Zero-shot completo** (`zeroshot.py`, 90 runs). Controle A01 reproduz os runs within em
+  igualdade exata, semente a semente.
+- **Razao normalizada** (`transfer_ratio.py`): transferencia / teto within do proprio
+  sujeito. Sem ela a tabela absoluta engana, e enganou -- "A03 e A08 transferem" era
+  artefato de serem os sujeitos mais faceis do dataset.
+- **(a) Within nos 9** (`within9.py`): em andamento, ~3.3 min/run, loop semente-por-fora
+  para que uma interrupcao deixe cobertura completa dos 9 com menos sementes.
+
+**Achados que mudaram o README:**
+- **O A01 e sujeito MEDIANO, nao forte.** A03, A08 e A09 o superam nas duas tarefas. A
+  frase do protocolo que afirmava o contrario nunca teve dado por tras; foi corrigida.
+- **O colapso de treino e do PIPELINE, nao do A01.** A02 2c (0.514 vs 0.674), A05 2c
+  (0.535 vs 0.708), A06 4c (0.257 vs 0.396, val 0.232 abaixo do acaso). Assinatura
+  consistente: parada precoce + validacao tao ruim quanto o teste, logo detectavel sem
+  tocar no teste. Isso e a precondicao do braco SE.
+- **O ensemble de sementes nao se sustenta contra o baseline certo.** Contra a media dos
+  membros ganha 8/8 (2c); contra o membro escolhido por validacao, 4/8 (p=0.30), e no
+  4-class o ganho e negativo. O achado do A01 (McNemar p=0.013 no 4c) NAO replicou.
+
+**Falta:**
+- Terminar as 5 sementes within nos 9 (roda sozinho, `python within9.py`).
+- **Braco SE nos 9, com n=5.** NAO fazer com n=2: o achado do SE e sobre variancia, e com
+  duas sementes "variancia" e o gap dividido por raiz(2). Pre-requisito: `se_ablation.py`
+  tem `SUBJECT_ID` fixo em 1 e nao salva `proba` (secao 7).
+- Euclidean Alignment como braco pareado (`align='ea-T'` ja existe no schema).
+- Hipotese pre-registrada, a testar com n=5: a dispersao entre sementes e inversamente
+  relacionada a acuracia media do sujeito? Spearman sobre 9 pares, por tarefa.
+
+---
+
+### Fase 2 (plano original, mantido para referencia)
 
 O projeto inteiro é A01. O README lista isso como limitação. Deixou de ser
 limitação: os 9 sujeitos estão no disco.
@@ -343,6 +378,10 @@ e tem `SUBJECT_ID` fixo em 1. Parametrizar o sujeito e passar a usar
 | `se_ablation.py` | ablação do bloco Squeeze-and-Excitation, pareada por semente |
 | `make_figures.py` | regenera as figuras em `figures/` a partir dos modelos salvos |
 | `paths.py` | **convenção de nomes e schema dos runs**; rodar direto lista o que já existe |
+| `zeroshot.py` | transferência zero-shot A01 -> 9 sujeitos; não treina, só prediz e mede |
+| `within9.py` | within-subject nos 9; loop semente-por-fora, resumível |
+| `transfer_ratio.py` | razão transferência / teto within; o número que o paper reporta |
+| `make_readme_sections.py` | regenera as tabelas do README a partir dos JSON (idempotente) |
 | `results_*.json` | métricas por semente, ensemble, ablações, padrões espaciais |
 | `runs/`, `models/` | um JSON e um `.keras` por semente |
 | `*.ipynb` | notebooks de aula; é de onde veio o bloco SE (Exercício 8). Não são entregáveis |
