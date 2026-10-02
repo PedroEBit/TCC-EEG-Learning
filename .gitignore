@@ -34,8 +34,9 @@ Desktop.ini
 # Subprojeto OpenBCI (repo git proprio; nao versionar como gitlink quebrado)
 OpenBCIOnlineProtocol/
 
-# Notebooks de aula (uso pessoal, nao sao entregaveis do TCC)
-explicando_ensemble.ipynb
+# Notebooks de aula (uso pessoal, nao sao entregaveis do TCC -- ver CLAUDE.md secao 9).
+# Continuam no disco; sairam do rastreamento com `git rm --cached` em 02/10/2026.
+*.ipynb
 
 # Figura solta na raiz, gerada em exploracao
 cm_4class_existing.png
