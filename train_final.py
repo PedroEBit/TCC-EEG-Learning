@@ -147,14 +147,15 @@ def stratified_split(y, val_frac=0.2, rng=None):
     return np.sort(np.array(tr)), np.sort(np.array(va))
 
 
-def run(n_classes, seed, epochs, batch_size, patience, save_path=None, augment=True):
+def run(n_classes, seed, epochs, batch_size, patience, save_path=None, augment=True,
+        subject=SUBJECT_ID):
     np.random.seed(seed)
     tf.random.set_seed(seed)
     tf.keras.utils.set_random_seed(seed)
     rng = np.random.default_rng(seed)
 
-    X_tr_full, y_tr_full = load_subject(SUBJECT_ID, 'T', n_classes)
-    X_te, y_te = load_subject(SUBJECT_ID, 'E', n_classes)
+    X_tr_full, y_tr_full = load_subject(subject, 'T', n_classes)
+    X_te, y_te = load_subject(subject, 'E', n_classes)
 
     # --- split ANTES do augmentation ---
     tr_idx, va_idx = stratified_split(y_tr_full, 0.2, rng)
@@ -201,6 +202,12 @@ def run(n_classes, seed, epochs, batch_size, patience, save_path=None, augment=T
 
     return {
         'seed': seed, 'n_classes': n_classes, 'augmented': bool(augment),
+        'subject': subject,
+        'predictions': {
+            'y_true': y_te.tolist(),
+            'y_pred': y_pred.tolist(),
+            'proba': np.round(proba, 6).tolist(),
+        },
         'n_train_orig': int(len(X_tr)), 'n_train_aug': int(len(X_tr_aug)),
         'n_val': int(len(X_va)), 'n_test': int(len(X_te)),
         'epochs_run': len(hist.history['loss']), 'epochs_cap': int(epochs),
@@ -292,8 +299,8 @@ def collect_ablation():
     return summary
 
 
-def model_path(n_classes, seed):
-    return MODELS_DIR / f'eegnet_a01_{n_classes}class_seed{seed}.keras'
+def model_path(n_classes, seed, subject=SUBJECT_ID):
+    return MODELS_DIR / f'eegnet_a{subject:02d}_{n_classes}class_seed{seed}.keras'
 
 
 if __name__ == '__main__':
