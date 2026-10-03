@@ -221,8 +221,8 @@ Only the SE block is switched on.
 reproduce as an effect of the architecture, and the 2-class *median* actually drops.
 
 **There is a large variance reduction, and it is the only effect here that reaches
-significance.** The across-seed **variance** falls by a factor of 33.7 in 2-class and 11.4 in
-4-class; the standard deviation, which is what the tables above report, falls by 5.80x and
+significance in subject A01, and it does not replicate on the other eight — see below.** The
+across-seed **variance** falls by a factor of 33.7 in 2-class and 11.4 in 4-class; the standard deviation, which is what the tables above report, falls by 5.80x and
 3.38x (0.1413 to 0.0244, and 0.0317 to 0.0094). Earlier versions of this file called the
 33.7 and 11.4 figures standard-deviation ratios. They are variance ratios, and the two differ
 by a square. Under the Pitman–Morgan test, which is the appropriate test for variances
@@ -268,6 +268,52 @@ this repository, but it is 2 test trials away from the base hard vote, which is 
 Soft voting cannot be compared here: `run_se()` stores `y_pred` but not the softmax
 distributions, so only hard voting is available on the SE side. The comparison above is
 hard vote against hard vote.
+
+### It does not replicate across the nine subjects
+
+The variance reduction above is the one SE effect that reached significance, and the roadmap
+treated it as the finding most worth defending. It was measured on one subject with five
+seeds, so the Pitman-Morgan test carried three degrees of freedom. The nine-subject arm was
+run to put it on firmer ground. It did the opposite.
+
+Both arms share subject, task, seed, validation split, augmentation, batch size, patience and
+band, and since the refactor they share the same code path: `train_final.run()` takes a model
+constructor, so only the architecture differs. 90 SE runs, paired seed by seed against the 90
+base runs.
+
+| | 2-class | 4-class |
+|---|---|---|
+| accuracy, median delta | -0.003 | -0.017 |
+| SE better in | 4/9 subjects | 3/9 subjects |
+| Wilcoxon, SE better | p = 0.29 | p = 0.95 |
+| Wilcoxon, SE *worse* | p = 0.72 | p = 0.065 |
+| SD ratio, median | 0.87 | 0.67 |
+| SE reduces dispersion in | 4/9 subjects | 3/9 subjects |
+| Wilcoxon, SE reduces dispersion | p = 0.59 | p = 0.79 |
+| runs below chance | 2 to 2, of 45 per arm | 1 to 1, of 45 per arm |
+
+A ratio below 1 means SE made the subject *more* variable, not less. The median subject moves
+the wrong way in both tasks, and excluding A01 it is worse: SE reduces dispersion in 3 of 8
+subjects in 2-class (median ratio 0.83) and 2 of 8 in 4-class (median ratio 0.59).
+
+**A01 is the outlier, and it is visible without a test.** Per-subject standard-deviation
+ratios in 2-class: A01 5.80, A06 1.94, A04 1.11, A07 1.01, then A05 0.79, A09 0.79, A03 0.76,
+A02 0.87, A08 0.53. A01 and A06 are the only subjects whose Pitman-Morgan reaches or
+approaches significance, and A01 is the development subject, the one from which the claim
+originally came.
+
+**SE does not prevent the collapses either.** That was the mechanism the variance reduction
+was assumed to work through. Across 45 runs per arm, the number falling below the exact
+binomial chance threshold is 2 against 2 in 2-class and 1 against 1 in 4-class. The runs that
+collapse are not the same ones, but the rate does not move.
+
+The honest reading: **the A01 measurement was not wrong, it did not generalise.** A single
+subject cannot distinguish an architectural effect from a favourable draw, which is the whole
+reason this phase exists. The one direction worth flagging for future work is the opposite of
+the original claim: in 4-class, SE is worse than base in 6 of 9 subjects at p = 0.065, a trend
+and nothing more at nine pairs, but it is not pointing the way the block was adopted to point.
+
+The block remains not adopted. It is now not adopted for a second, stronger reason.
 
 ### Reported, not adopted
 

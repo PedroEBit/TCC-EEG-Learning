@@ -181,7 +181,12 @@ Feito em 30/09/2026. Repositório limpo (só material do paper), tag
   rho=-0.667 p=0.050 (2c) e rho=-0.867 p=0.0025 (4c). Com 3 sementes o 4-class dava
   p=0.637 -- o dp por sujeito era ruido demais. E resultado sobre n tanto quanto sobre
   dispersao.
-- **Braco SE nos 9, com n=5.** NAO fazer com n=2: o achado do SE e sobre variancia, e com
+- ~~Braco SE nos 9, com n=5~~ **FEITO 03/10/2026**, 90 runs. **NAO REPLICA.**
+  SE reduz dispersao em 4/9 (2c) e 3/9 (4c); razao mediana de desvios 0.87x e 0.67x, ou seja
+  o sujeito mediano fica MAIS variavel. Wilcoxon p=0.59 e 0.79. Sem A01: 3/8 e 2/8, razoes
+  0.83x e 0.59x. Nao evita colapsos (2->2 e 1->1 em 45 runs por braco). Em 4c o SE e PIOR
+  em 6/9, p=0.065. O A01 era outlier: unico com P-M significativo.
+  Nota historica -- este item dizia NAO fazer com n=2: o achado do SE e sobre variancia, e com
   duas sementes "variancia" e o gap dividido por raiz(2). Pre-requisito: `se_ablation.py`
   tem `SUBJECT_ID` fixo em 1 e nao salva `proba` (secao 7).
 - Euclidean Alignment como braco pareado (`align='ea-T'` ja existe no schema).

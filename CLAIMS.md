@@ -103,6 +103,31 @@ is a result about seed counts as much as about dispersion.
 Caveats: nine points, and the 2-class p = 0.050 sits exactly on the conventional threshold
 and is uncorrected. It is reported because it was pre-registered.
 
+### 7. The SE variance reduction is an A01 artifact
+
+The SE block's variance reduction was the project's most defensible single-subject finding
+(variance down 33.7x and 11.4x, equivalently 5.80x and 3.38x in standard deviation,
+Pitman-Morgan p = 0.016 and 0.030, on three degrees of freedom). Run on all nine subjects at
+five seeds, paired seed by seed, it does not replicate.
+
+| | 2-class | 4-class |
+|---|---|---|
+| SE reduces dispersion in | 4/9 subjects | 3/9 subjects |
+| median SD ratio (>1 means SE helps) | 0.87 | 0.67 |
+| Wilcoxon, SE reduces dispersion | p = 0.59 | p = 0.79 |
+| accuracy, median delta | -0.003 | -0.017 |
+| runs below chance | 2 to 2 of 45 | 1 to 1 of 45 |
+
+Excluding A01, SE reduces dispersion in 3 of 8 subjects (2-class, median ratio 0.83) and 2 of
+8 (4-class, median ratio 0.59) — the median subject becomes *more* variable. SE also fails to
+prevent the collapses, which is the mechanism the effect was assumed to act through.
+
+In 4-class SE is worse than base in 6 of 9 subjects, Wilcoxon p = 0.065. Report that as a
+trend at nine pairs, not as an effect.
+
+The A01 measurement was not wrong; it did not generalise. One subject cannot separate an
+architectural effect from a favourable draw.
+
 ---
 
 ## Not supported — do not write these
@@ -117,10 +142,8 @@ and is uncorrected. It is reported because it was pre-registered.
   are within-subject. The transfer numbers here are zero-shot from one source subject.
 - **"A05 is a subject that cannot be decoded."** A05 reaches 0.639 in 2-class on its own
   model. Its 2-class transfer failure is transport, not the subject.
-- **Any claim about the Squeeze-and-Excitation block across the nine subjects.** That arm has
-  not been run. The A01-only SE result (variance reduced 33.7x and 11.4x, equivalently
-  5.80x and 3.38x in standard deviation, Pitman-Morgan
-  p = 0.016 and 0.030) rests on three degrees of freedom and is reported as such.
+- **"The SE block reduces across-seed variance."** It does so on A01 and on no one else. See
+  supported claim 7.
 - **Any claim about layer freezing, fine-tuning or calibration budget.** Not run. This
   repository measures the zero-shot floor those experiments would have to beat.
 - **Any claim about Euclidean Alignment or domain adaptation.** Not run.
