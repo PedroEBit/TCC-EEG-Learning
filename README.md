@@ -221,8 +221,11 @@ Only the SE block is switched on.
 reproduce as an effect of the architecture, and the 2-class *median* actually drops.
 
 **There is a large variance reduction, and it is the only effect here that reaches
-significance.** The across-seed standard deviation falls by a factor of 33.7 in 2-class and
-11.4 in 4-class. Under the Pitman–Morgan test, which is the appropriate test for variances
+significance.** The across-seed **variance** falls by a factor of 33.7 in 2-class and 11.4 in
+4-class; the standard deviation, which is what the tables above report, falls by 5.80x and
+3.38x (0.1413 to 0.0244, and 0.0317 to 0.0094). Earlier versions of this file called the
+33.7 and 11.4 figures standard-deviation ratios. They are variance ratios, and the two differ
+by a square. Under the Pitman–Morgan test, which is the appropriate test for variances
 of *paired* samples, p = 0.016 and p = 0.030.
 
 The block compresses both tails, in both tasks:
@@ -374,7 +377,8 @@ poor as its test accuracy, so the failure is visible without touching the test s
 between two seeds of the same subject reach 14 to 17 accuracy points.
 
 This matters beyond replication. The one effect the Squeeze-and-Excitation block was shown
-to have is variance reduction — 33.7x and 11.4x on A01, Pitman–Morgan p = 0.016 and 0.030,
+to have is variance reduction — 33.7x and 11.4x in variance, equivalently 5.80x and 3.38x in
+standard deviation, on A01, Pitman–Morgan p = 0.016 and 0.030,
 on three degrees of freedom. Establishing that the variance it targets is a general property
 of the pipeline rather than a quirk of one subject is the precondition for testing that claim
 properly. The nine-subject SE arm is not run yet, and it needs five seeds per subject: a
@@ -633,7 +637,8 @@ depthwise convolution requires.
   does address the variance; nested cross-validation, which would also give an unbiased
   estimate of the selection itself, is not. A second thing that addresses it, measured but
   deliberately not adopted, is the SE block: it cuts the across-seed standard deviation by
-  33.7× in 2-class and 11.4× in 4-class without changing mean accuracy.
+  33.7× in variance (5.80× in standard deviation) in 2-class and 11.4× (3.38×) in 4-class,
+  without changing mean accuracy.
 - Validation accuracy is recorded as `val_acc_restored` — the accuracy of the model
   `EarlyStopping` actually restored. The obvious alternative, the peak `val_accuracy` seen
   during training, is optimistic by up to 10 points here (seed 3, 2-class: 67.9% peak vs

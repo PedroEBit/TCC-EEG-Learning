@@ -40,7 +40,15 @@ import time
 import numpy as np
 
 import paths
-from train_final import run, model_path, ROOT, MODELS_DIR
+from train_final import run, model_path, ROOT, MODELS_DIR, build_eegnet
+from se_ablation import build_eegnet_se
+
+# Arquiteturas disponiveis. O braco SE e pareado com o base semente a semente:
+# mesmo sujeito, mesma tarefa, mesma semente, mesmo split de validacao (derivado
+# da semente), mesmo augmentation, mesmo batch, mesma paciencia. Muda so o
+# construtor do modelo -- CLAUDE.md secao 3, regra 2.
+BUILDERS = {'base': build_eegnet, 'se': build_eegnet_se}
+ARCHS = ('base', 'se')
 
 SUBJECTS = range(1, 10)
 SEEDS = range(5)
@@ -58,31 +66,32 @@ TASKS = (2, 4)
 _CONFIG_KEYS = ('seed', 'n_classes', 'augmented', 'subject')
 
 
-def already_done(subject, n_classes, seed):
+def already_done(subject, n_classes, seed, arch='base'):
     """True se o run E o modelo existem. Os dois, como no train_final.py."""
     p = paths.run_path(experiment='within', subject=subject, n_classes=n_classes,
-                       arch='base', seed=seed, augmented=True, band=BAND,
+                       arch=arch, seed=seed, augmented=True, band=BAND,
                        align=None)
-    return p.exists() and model_path(n_classes, seed, subject=subject).exists()
+    return p.exists() and model_path(n_classes, seed, subject=subject,
+                                     arch=arch).exists()
 
 
-def train_one(subject, n_classes, seed):
+def train_one(subject, n_classes, seed, arch='base'):
     """Treina um (sujeito, tarefa, semente) e grava via paths.save_run.
 
     Devolve (metrics, segundos) ou (None, 0.0) se ja existia.
     """
-    if already_done(subject, n_classes, seed):
+    if already_done(subject, n_classes, seed, arch):
         return None, 0.0
 
     t0 = time.time()
-    r = run(n_classes, seed, subject=subject,
-            save_path=model_path(n_classes, seed, subject=subject),
+    r = run(n_classes, seed, subject=subject, build_fn=BUILDERS[arch],
+            save_path=model_path(n_classes, seed, subject=subject, arch=arch),
             **TASK_KW[n_classes])
     elapsed = time.time() - t0
 
     preds = r.pop('predictions')
     config = paths.make_config(
-        experiment='within', subject=subject, n_classes=n_classes, arch='base',
+        experiment='within', subject=subject, n_classes=n_classes, arch=arch,
         seed=seed, augmented=True, band=BAND, align=None,
         predictions_complete=True)
     metrics = {k: v for k, v in r.items() if k not in _CONFIG_KEYS}
@@ -90,7 +99,7 @@ def train_one(subject, n_classes, seed):
     return metrics, elapsed
 
 
-def collect():
+def collect(arch='base'):
     """Agrega os within dos 9 em results_within9.json.
 
     Reporta POR SUJEITO. A media dos 9 existe para comparar com a literatura,
@@ -101,7 +110,7 @@ def collect():
         subs = {}
         for s in SUBJECTS:
             runs = paths.load_runs('within', subject=s, n_classes=n_classes,
-                                   arch='base', augmented=True)
+                                   arch=arch, augmented=True)
             if not runs:
                 continue
             runs.sort(key=lambda r: r['config']['seed'])
@@ -163,30 +172,34 @@ def collect():
               f'faixa [{a["min"]:.4f}, {a["max"]:.4f}], '
               f'dp entre sujeitos {a["std_across_subjects"]:.4f}')
 
-    (ROOT / 'results_within9.json').write_text(
+    name = 'results_within9.json' if arch == 'base' else f'results_within9_{arch}.json'
+    (ROOT / name).write_text(
         json.dumps(out, indent=2), encoding='utf-8')
-    print('\nresults_within9.json salvo.')
+    print(f'\n{name} salvo.')
     return out
 
 
 if __name__ == '__main__':
     if '--collect' not in sys.argv:
         MODELS_DIR.mkdir(exist_ok=True)
-        todo = [(seed, s, nc) for seed in SEEDS for s in SUBJECTS for nc in TASKS
-                if not already_done(s, nc, seed)]
+        archs = [a for a in ARCHS if a in sys.argv] or ['base']
+        todo = [(seed, s, nc, a) for a in archs for seed in SEEDS
+                for s in SUBJECTS for nc in TASKS
+                if not already_done(s, nc, seed, a)]
         print(f'{len(todo)} treinos a fazer '
               f'(de {len(list(SEEDS)) * len(list(SUBJECTS)) * len(TASKS)}); '
               f'o resto ja esta no disco.', flush=True)
 
         times = []
-        for i, (seed, subject, n_classes) in enumerate(todo, 1):
-            m, dt = train_one(subject, n_classes, seed)
+        for i, (seed, subject, n_classes, arch) in enumerate(todo, 1):
+            m, dt = train_one(subject, n_classes, seed, arch)
             if m is None:
                 continue
             times.append(dt)
             eta = np.mean(times) * (len(todo) - i) / 60
-            print(f'[{i}/{len(todo)}] A{subject:02d} {n_classes}c seed {seed}: '
+            print(f'[{i}/{len(todo)}] {arch} A{subject:02d} {n_classes}c seed {seed}: '
                   f'acc={m["test_accuracy"]:.4f} kappa={m["test_kappa"]:.4f} '
                   f'val={m["val_acc_restored"]:.3f} ({m["epochs_run"]} ep, '
                   f'{dt/60:.1f} min)  ETA {eta:.0f} min', flush=True)
-    collect()
+    for a in ([x for x in ARCHS if x in sys.argv] or ['base']):
+        collect(a)

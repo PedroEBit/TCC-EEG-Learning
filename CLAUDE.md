@@ -93,7 +93,7 @@ confiabilidade, não acurácia.
 **Bloco Squeeze-and-Excitation (+148 parâmetros), medido, não adotado:**
 - Acurácia média: +4.4 pts (2-class) e +0.6 pts (4-class). Wilcoxon p = 1.00 e 0.81.
   **Não há ganho de acurácia.** O +8.6 pts do notebook não se reproduz.
-- Variância: desvio cai **33.7×** (2-class) e **11.4×** (4-class).
+- Variância: a **variância** cai **33.7×** (2-class) e **11.4×** (4-class). O **desvio padrão** cai 5.80× e 3.38× (0.1413->0.0244 e 0.0317->0.0094). Este arquivo dizia 'desvio cai 33.7x', que estava errado: 33.7 = 5.80². Corrigido em 03/10/2026.
   Pitman–Morgan p = 0.016 e p = 0.030. É o único efeito que atinge significância.
 - Corta os dois rabos: piso 57.6→84.7 e teto 92.4→91.0 (2-class).
 - O braço 4-class é o convincente, porque lá não havia colapso para resgatar.

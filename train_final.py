@@ -148,7 +148,10 @@ def stratified_split(y, val_frac=0.2, rng=None):
 
 
 def run(n_classes, seed, epochs, batch_size, patience, save_path=None, augment=True,
-        subject=SUBJECT_ID):
+        subject=SUBJECT_ID, build_fn=None):
+    # build_fn parametriza a ARQUITETURA sem duplicar o pipeline. O se_ablation.py
+    # nasceu com uma "copia fiel" desta funcao, e copia fiel e exatamente como uma
+    # ablacao pareada deixa de ser pareada quando um dos lados muda.
     np.random.seed(seed)
     tf.random.set_seed(seed)
     tf.keras.utils.set_random_seed(seed)
@@ -169,7 +172,7 @@ def run(n_classes, seed, epochs, batch_size, patience, save_path=None, augment=T
     else:
         X_tr_aug, y_tr_aug = X_tr, y_tr
 
-    model = build_eegnet(N_CHANNELS, X_tr.shape[-1], n_classes, SFREQ)
+    model = (build_fn or build_eegnet)(N_CHANNELS, X_tr.shape[-1], n_classes, SFREQ)
     model.compile(optimizer=tf.keras.optimizers.Adam(1e-3),
                   loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
@@ -210,6 +213,7 @@ def run(n_classes, seed, epochs, batch_size, patience, save_path=None, augment=T
         },
         'n_train_orig': int(len(X_tr)), 'n_train_aug': int(len(X_tr_aug)),
         'n_val': int(len(X_va)), 'n_test': int(len(X_te)),
+        'n_params_total': int(model.count_params()),
         'epochs_run': len(hist.history['loss']), 'epochs_cap': int(epochs),
         'val_acc_restored': val_acc_restored,
         'best_val_acc': float(max(hist.history['val_accuracy'])),
@@ -299,8 +303,11 @@ def collect_ablation():
     return summary
 
 
-def model_path(n_classes, seed, subject=SUBJECT_ID):
-    return MODELS_DIR / f'eegnet_a{subject:02d}_{n_classes}class_seed{seed}.keras'
+def model_path(n_classes, seed, subject=SUBJECT_ID, arch='base'):
+    # arch='base' produz o nome historico (eegnet_a01_4class_seed0.keras), entao
+    # os modelos ja em disco continuam sendo encontrados.
+    tag = '' if arch == 'base' else f'_{arch}'
+    return MODELS_DIR / f'eegnet_a{subject:02d}_{n_classes}class{tag}_seed{seed}.keras'
 
 
 if __name__ == '__main__':

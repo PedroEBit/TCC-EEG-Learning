@@ -118,7 +118,8 @@ and is uncorrected. It is reported because it was pre-registered.
 - **"A05 is a subject that cannot be decoded."** A05 reaches 0.639 in 2-class on its own
   model. Its 2-class transfer failure is transport, not the subject.
 - **Any claim about the Squeeze-and-Excitation block across the nine subjects.** That arm has
-  not been run. The A01-only SE result (variance reduced 33.7x and 11.4x, Pitman-Morgan
+  not been run. The A01-only SE result (variance reduced 33.7x and 11.4x, equivalently
+  5.80x and 3.38x in standard deviation, Pitman-Morgan
   p = 0.016 and 0.030) rests on three degrees of freedom and is reported as such.
 - **Any claim about layer freezing, fine-tuning or calibration budget.** Not run. This
   repository measures the zero-shot floor those experiments would have to beat.

@@ -1,0 +1,144 @@
+{
+  "2class": {
+    "subjects": {
+      "A01": {
+        "subject": 1,
+        "n_seeds": 5,
+        "seeds": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "base_acc": [
+          0.8819444444444444,
+          0.8819444444444444,
+          0.9236111111111112,
+          0.5763888888888888,
+          0.8680555555555556
+        ],
+        "se_acc": [
+          0.875,
+          0.8541666666666666,
+          0.8472222222222222,
+          0.8680555555555556,
+          0.9097222222222222
+        ],
+        "base_mean": 0.826388888888889,
+        "se_mean": 0.8708333333333333,
+        "delta_mean": 0.0444444444444444,
+        "base_sd": 0.14129854131510977,
+        "se_sd": 0.02435510821770859,
+        "sd_ratio_base_over_se": 5.801597761424507,
+        "pitman_morgan": {
+          "r": 0.9424212193066942,
+          "p_value": 0.016441470837978756,
+          "df": 3
+        },
+        "chance_threshold": 0.5763888888888888,
+        "base_runs_below_chance": 0,
+        "se_runs_below_chance": 0,
+        "base_min": 0.5763888888888888,
+        "se_min": 0.8472222222222222,
+        "base_max": 0.9236111111111112,
+        "se_max": 0.9097222222222222
+      }
+    },
+    "across_subjects": {
+      "accuracy": {
+        "median_delta": 0.0444444444444444,
+        "mean_delta": 0.0444444444444444,
+        "n_subjects": 1,
+        "n_favouring": 1,
+        "wilcoxon_p": 0.5,
+        "sign_test_p": 0.5
+      },
+      "dispersion": {
+        "median_sd_base": 0.14129854131510977,
+        "median_sd_se": 0.02435510821770859,
+        "median_sd_ratio": 5.801597761424507,
+        "n_subjects": 1,
+        "n_favouring": 1,
+        "wilcoxon_p": 0.5,
+        "sign_test_p": 0.5
+      },
+      "collapses": {
+        "base": 0,
+        "se": 0,
+        "n_runs_per_arm": 5
+      }
+    }
+  },
+  "4class": {
+    "subjects": {
+      "A01": {
+        "subject": 1,
+        "n_seeds": 5,
+        "seeds": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "base_acc": [
+          0.7083333333333334,
+          0.7569444444444444,
+          0.7291666666666666,
+          0.7152777777777778,
+          0.7847222222222222
+        ],
+        "se_acc": [
+          0.7534722222222222,
+          0.75,
+          0.7465277777777778,
+          0.7430555555555556,
+          0.7291666666666666
+        ],
+        "base_mean": 0.7388888888888888,
+        "se_mean": 0.7444444444444444,
+        "delta_mean": 0.005555555555555536,
+        "base_sd": 0.03167153958608715,
+        "se_sd": 0.009381427837573827,
+        "sd_ratio_base_over_se": 3.375982860438211,
+        "pitman_morgan": {
+          "r": 0.9131590706867816,
+          "p_value": 0.030316634582580937,
+          "df": 3
+        },
+        "chance_threshold": 0.2951388888888889,
+        "base_runs_below_chance": 0,
+        "se_runs_below_chance": 0,
+        "base_min": 0.7083333333333334,
+        "se_min": 0.7291666666666666,
+        "base_max": 0.7847222222222222,
+        "se_max": 0.7534722222222222
+      }
+    },
+    "across_subjects": {
+      "accuracy": {
+        "median_delta": 0.005555555555555536,
+        "mean_delta": 0.005555555555555536,
+        "n_subjects": 1,
+        "n_favouring": 1,
+        "wilcoxon_p": 0.5,
+        "sign_test_p": 0.5
+      },
+      "dispersion": {
+        "median_sd_base": 0.03167153958608715,
+        "median_sd_se": 0.009381427837573827,
+        "median_sd_ratio": 3.375982860438211,
+        "n_subjects": 1,
+        "n_favouring": 1,
+        "wilcoxon_p": 0.5,
+        "sign_test_p": 0.5
+      },
+      "collapses": {
+        "base": 0,
+        "se": 0,
+        "n_runs_per_arm": 5
+      }
+    }
+  }
+}
