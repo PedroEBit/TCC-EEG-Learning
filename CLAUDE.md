@@ -3,6 +3,10 @@
 Instruções para qualquer agente que trabalhe neste repositório. Leia inteiro antes
 de agir. Escrito em 30/09/2026.
 
+> **Se você é um agente novo neste projeto:** leia este arquivo e depois o
+> **`HANDOFF.md`**, que tem o estado de trabalho em 06/10/2026 — o que está feito, as
+> armadilhas que já morderam, e por onde pegar. O `CLAIMS.md` tem o que o dado sustenta.
+
 ---
 
 ## 0. Como trabalhar comigo (Pedro)
